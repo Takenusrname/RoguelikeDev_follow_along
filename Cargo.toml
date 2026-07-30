@@ -1,6 +1,17 @@
 [package]
 name = "mq"
-version = "0.1.0"
+version = "0.1.10"
 edition = "2024"
 
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
 [dependencies]
+bracket-lib = "0.8.7"
+rltk = "0.8.7"
+specs = "0.20.0"
+specs-derive = "0.4.1"
+
