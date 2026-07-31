@@ -4,7 +4,7 @@ use bracket_lib::{
     random::RandomNumberGenerator,
     terminal::{BTerm, EMBED, GameState, embedded_resource, link_resource, main_loop},
 };
-use specs::prelude::*;
+use specs::{prelude::*, saveload::SimpleMarkerAllocator};
 
 mod colors;
 pub use colors::*;
@@ -28,6 +28,7 @@ mod player;
 use player::*;
 mod rect;
 pub use rect::Rect;
+mod saveload_system;
 mod spawner;
 mod visibility_system;
 use visibility_system::VisibilitySystem;
@@ -44,6 +45,8 @@ pub enum RunState {
     ShowInventory,
     ShowDropItem,
     ShowTargeting { range: i32, item: Entity },
+    MainMenu { menu_sel: gui::MainMenuSelection },
+    SaveGame,
 }
 
 struct State {
@@ -52,32 +55,37 @@ struct State {
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
-        ctx.cls();
-
-        //let map = self.ecs.fetch::<Map>();
-        draw_map(&self.ecs, ctx);
-
-        {
-            let positions = self.ecs.read_storage::<Position>();
-            let renderables = self.ecs.read_storage::<Renderable>();
-            let map = self.ecs.fetch::<Map>();
-
-            let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
-            data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
-            for (pos, render) in data.iter() {
-                let idx = map.xy_idx(pos.x, pos.y);
-                if map.visible_tiles[idx] {
-                    ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
-                }
-            }
-
-            gui::draw_ui(&self.ecs, ctx);
-        }
-
         let mut newrunstate;
+
         {
             let runstate = self.ecs.fetch::<RunState>();
             newrunstate = *runstate;
+        }
+
+        ctx.cls();
+
+        match newrunstate {
+            RunState::MainMenu { .. } => {}
+            _ => {
+                draw_map(&self.ecs, ctx);
+
+                {
+                    let positions = self.ecs.read_storage::<Position>();
+                    let renderables = self.ecs.read_storage::<Renderable>();
+                    let map = self.ecs.fetch::<Map>();
+
+                    let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+                    data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
+                    for (pos, render) in data.iter() {
+                        let idx = map.xy_idx(pos.x, pos.y);
+                        if map.visible_tiles[idx] {
+                            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
+                        }
+                    }
+
+                    gui::draw_ui(&self.ecs, ctx);
+                }
+            }
         }
 
         match newrunstate {
@@ -167,6 +175,32 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::MainMenu { .. } => {
+                let result = gui::main_menu(self, ctx);
+                match result {
+                    gui::MainMenuResult::NoSelection { selected } => {
+                        newrunstate = RunState::MainMenu { menu_sel: selected }
+                    }
+
+                    gui::MainMenuResult::Selected { selected } => match selected {
+                        gui::MainMenuSelection::NewGame => newrunstate = RunState::PreRun,
+                        gui::MainMenuSelection::LoadGame => {
+                            saveload_system::load_game(&mut self.ecs);
+                            newrunstate = RunState::AwaitingInput;
+                            saveload_system::delete_save();
+                        },
+                        gui::MainMenuSelection::Quit => {
+                            ::std::process::exit(0);
+                        }
+                    },
+                }
+            }
+            RunState::SaveGame => {
+                saveload_system::save_game(&mut self.ecs);
+                newrunstate = RunState::MainMenu {
+                    menu_sel: gui::MainMenuSelection::LoadGame,
+                }
+            }
         }
 
         {
@@ -200,8 +234,6 @@ impl State {
     }
 }
 
-
-
 embedded_resource!(FONT_FILE, "../resources/cp437_16x16_mod.png");
 
 fn main() -> BError {
@@ -223,6 +255,8 @@ fn main() -> BError {
 
     component_registration(&mut gs.ecs);
 
+    gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
+
     let map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
@@ -237,7 +271,9 @@ fn main() -> BError {
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
-    gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(RunState::MainMenu {
+        menu_sel: gui::MainMenuSelection::NewGame,
+    });
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to MQ".to_string()],
     });

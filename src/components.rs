@@ -1,6 +1,12 @@
+use super::map;
 use bracket_lib::{color::RGB, geometry::Point, terminal::FontCharType};
-use specs::prelude::*;
-use specs_derive::Component;
+use serde::{Deserialize, Serialize};
+use specs::{
+    prelude::*,
+    saveload::{ConvertSaveload, Marker, SimpleMarker},
+};
+use specs_derive::*;
+use std::convert::Infallible as NoError;
 
 pub fn component_registration(ecs: &mut World) {
     ecs.register::<AreaOfEffect>();
@@ -18,6 +24,8 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<ProvidesHealing>();
     ecs.register::<Ranged>();
     ecs.register::<Renderable>();
+    ecs.register::<SerializationHelper>();
+    ecs.register::<SimpleMarker<SerializeMe>>();
     ecs.register::<SufferDamage>();
     ecs.register::<Viewshed>();
     ecs.register::<WantsToUseItem>();
@@ -26,15 +34,15 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<WantsToPickupItem>();
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct AreaOfEffect {
     pub radius: i32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct BlocksTile {}
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct CombatStats {
     pub max_hp: i32,
     pub hp: i32,
@@ -42,55 +50,55 @@ pub struct CombatStats {
     pub power: i32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Confusion {
     pub turns: i32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Consumable {}
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, ConvertSaveload)]
 pub struct InBackpack {
     pub owner: Entity,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct InflictsDamage {
     pub damage: i32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Item {}
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Monster {}
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Name {
     pub name: String,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Serialize, Deserialize, Clone)]
 pub struct Player {}
 
-#[derive(Component)]
+#[derive(Component, ConvertSaveload, Clone)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct ProvidesHealing {
     pub heal_amount: i32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Ranged {
     pub range: i32,
 }
 
-#[derive(Component)]
+#[derive(Component, ConvertSaveload, Clone)]
 pub struct Renderable {
     pub glyph: FontCharType,
     pub fg: RGB,
@@ -98,7 +106,14 @@ pub struct Renderable {
     pub render_order: i32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct SerializationHelper {
+    pub map: map::Map,
+}
+
+pub struct SerializeMe;
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct SufferDamage {
     pub amount: Vec<i32>,
 }
@@ -116,30 +131,30 @@ impl SufferDamage {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, ConvertSaveload, Clone)]
 pub struct Viewshed {
     pub visible_tiles: Vec<Point>,
     pub range: i32,
     pub dirty: bool,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload)]
 pub struct WantsToUseItem {
     pub item: Entity,
     pub target: Option<Point>,
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, ConvertSaveload)]
 pub struct WantsToDropItem {
     pub item: Entity,
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct WantsToMelee {
     pub target: Entity,
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, ConvertSaveload)]
 pub struct WantsToPickupItem {
     pub collected_by: Entity,
     pub item: Entity,
