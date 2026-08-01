@@ -7,7 +7,7 @@ use bracket_lib::{
     random::RandomNumberGenerator,
     terminal::{BTerm, to_cp437},
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -19,6 +19,7 @@ pub const MAPCOUNT: usize = MAPHEIGHT * MAPWIDTH;
 pub enum TileType {
     Wall,
     Floor,
+    DownStairs,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone)]
@@ -30,6 +31,7 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+    pub depth: i32,
 
     #[serde(skip)]
     pub tile_content: Vec<Vec<Entity>>,
@@ -141,7 +143,7 @@ impl Map {
         }
     }
 
-    pub fn new_map_rooms_and_corridors() -> Map {
+    pub fn new_map_rooms_and_corridors(new_depth: i32) -> Map {
         let mut map = Map {
             tiles: vec![TileType::Wall; MAPCOUNT],
             rooms: Vec::new(),
@@ -151,6 +153,7 @@ impl Map {
             visible_tiles: vec![false; MAPCOUNT],
             blocked: vec![false; MAPCOUNT],
             tile_content: vec![Vec::new(); MAPCOUNT],
+            depth: new_depth,
         };
 
         const MAX_ROOMS: i32 = 30;
@@ -188,6 +191,11 @@ impl Map {
                 map.rooms.push(new_room);
             }
         }
+
+        let stairs_pos = map.rooms[map.rooms.len() - 1].center();
+        let stairs_idx = map.xy_idx(stairs_pos.0, stairs_pos.1);
+        map.tiles[stairs_idx] = TileType::DownStairs;
+
         map
     }
 }
@@ -212,6 +220,11 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
                     glyph = wall_glyph(&*map, x, y);
                     fg = RGB::named(WALL_FG);
                     bg = RGB::named(WALL_BG);
+                }
+                TileType::DownStairs => {
+                    glyph = to_cp437('»');
+                    fg = RGB::named(STAIRS_FG);
+                    bg = RGB::named(DEFAULT_BG);
                 }
             }
             if !map.visible_tiles[idx] {

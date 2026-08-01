@@ -39,6 +39,7 @@ pub const FLOOR_FG: (u8, u8, u8) = DB32_COLOR28;
 pub const FLOOR_BG: (u8, u8, u8) = DB32_COLOR31;
 pub const MEM_FG: (u8, u8, u8) = DB32_COLOR18;
 pub const AETHER: (u8, u8, u8) = DB32_COLOR18;
+pub const STAIRS_FG: (u8, u8, u8) = DB32_COLOR18;
 
 // Items
 pub const POT_HEALTH_FG: (u8, u8, u8) = DB32_COLOR05;

@@ -117,6 +117,10 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 menu_sel: gui::MainMenuSelection::LoadGame,
             }
         }
+        RunState::NextLevel => {
+            gs.goto_next_level();
+            newrunstate = RunState::PreRun;
+        }
     }
 
     {
