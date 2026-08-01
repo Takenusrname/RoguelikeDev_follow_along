@@ -333,10 +333,12 @@ pub fn main_menu(gs: &mut State, ctx: &mut BTerm) -> MainMenuResult {
         } else {
             ctx.print_color_centered(24, non_sel_fg, bg, new_game_txt);
         }
-        if selection == MainMenuSelection::LoadGame {
-            ctx.print_color_centered(25, sel_fg, bg, load_game_txt);
-        } else {
-            ctx.print_color_centered(25, non_sel_fg, bg, load_game_txt);
+        if save_exists {
+            if selection == MainMenuSelection::LoadGame {
+                ctx.print_color_centered(25, sel_fg, bg, load_game_txt);
+            } else {
+                ctx.print_color_centered(25, non_sel_fg, bg, load_game_txt);
+            }
         }
         if selection == MainMenuSelection::Quit {
             ctx.print_color_centered(26, sel_fg, bg, quit_txt);

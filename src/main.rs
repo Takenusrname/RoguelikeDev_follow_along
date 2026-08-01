@@ -26,11 +26,12 @@ mod monster_ai_system;
 use monster_ai_system::MonsterAI;
 mod player;
 use player::*;
+pub mod random_table;
 mod rect;
 pub use rect::Rect;
 mod render;
 use render::render_world;
-mod saveload_system;
+pub mod saveload_system;
 mod spawner;
 mod statemachine;
 use statemachine::current_state;
@@ -109,7 +110,7 @@ impl State {
         let backpack = self.ecs.read_storage::<InBackpack>();
         let player_entity = self.ecs.fetch::<Entity>();
 
-        let mut to_delete: Vec<Entity> =Vec::new();
+        let mut to_delete: Vec<Entity> = Vec::new();
         for entity in entities.join() {
             let mut should_delete = true;
 
@@ -135,19 +136,22 @@ impl State {
     fn goto_next_level(&mut self) {
         let to_delete = self.entities_to_remove_on_level_change();
         for target in to_delete {
-            self.ecs.delete_entity(target).expect("Unable to delete entity");
+            self.ecs
+                .delete_entity(target)
+                .expect("Unable to delete entity");
         }
 
         let worldmap;
+        let current_depth: i32;
         {
             let mut worldmap_res = self.ecs.write_resource::<Map>();
-            let current_depth = worldmap_res.depth;
+            current_depth = worldmap_res.depth;
             *worldmap_res = Map::new_map_rooms_and_corridors(current_depth + 1);
             worldmap = worldmap_res.clone();
         }
 
         for room in worldmap.rooms.iter().skip(1) {
-            spawner::spawn_room(&mut self.ecs, room);
+            spawner::spawn_room(&mut self.ecs, room, current_depth + 1);
         }
 
         let (player_x, player_y) = worldmap.rooms[0].center();
@@ -168,7 +172,9 @@ impl State {
         }
 
         let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
-        gamelog.entries.push("You descend to the next level, and take a moment to heal.".to_string());
+        gamelog
+            .entries
+            .push("You descend to the next level, and take a moment to heal.".to_string());
         let mut player_health_store = self.ecs.write_storage::<CombatStats>();
         let player_health = player_health_store.get_mut(*player_entity);
         if let Some(player_health) = player_health {
@@ -199,7 +205,7 @@ fn main() -> BError {
     component_registration(&mut gs.ecs);
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
-
+    let save = saveload_system::does_save_exist();
     let map = Map::new_map_rooms_and_corridors(1);
     let (player_x, player_y) = map.rooms[0].center();
 
@@ -208,15 +214,21 @@ fn main() -> BError {
     gs.ecs.insert(RandomNumberGenerator::new());
 
     for room in map.rooms.iter().skip(1) {
-        spawner::spawn_room(&mut gs.ecs, room);
+        spawner::spawn_room(&mut gs.ecs, room, 1);
     }
 
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
-    gs.ecs.insert(RunState::MainMenu {
-        menu_sel: gui::MainMenuSelection::NewGame,
-    });
+    if save {
+        gs.ecs.insert(RunState::MainMenu {
+            menu_sel: gui::MainMenuSelection::LoadGame,
+        });
+    } else {
+        gs.ecs.insert(RunState::MainMenu {
+            menu_sel: gui::MainMenuSelection::NewGame,
+        });
+    }
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to MQ".to_string()],
     });
