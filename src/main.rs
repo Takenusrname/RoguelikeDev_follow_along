@@ -24,6 +24,7 @@ mod melee_combat_system;
 use melee_combat_system::MeleeCombatSystem;
 mod monster_ai_system;
 use monster_ai_system::MonsterAI;
+mod particle_system;
 mod player;
 use player::*;
 pub mod random_table;
@@ -54,7 +55,7 @@ pub enum RunState {
     SaveGame,
     NextLevel,
     ShowRemoveItem,
-    GameOver
+    GameOver,
 }
 
 struct State {
@@ -71,6 +72,7 @@ impl GameState for State {
         }
 
         ctx.cls();
+        particle_system::cull_dead_particles(&mut self.ecs, ctx);
 
         match newrunstate {
             RunState::MainMenu { .. } => {}
@@ -105,6 +107,9 @@ impl State {
         drop_items.run_now(&self.ecs);
         let mut item_remove = ItemRemoveSystem {};
         item_remove.run_now(&self.ecs);
+        let mut particles = particle_system::ParticleSpawnSystem {};
+        particles.run_now(&self.ecs);
+        
         self.ecs.maintain();
     }
 
@@ -195,7 +200,6 @@ impl State {
     }
 
     fn game_over_cleanup(&mut self) {
-
         let mut to_delete = Vec::new();
         for e in self.ecs.entities().join() {
             to_delete.push(e);
@@ -219,10 +223,13 @@ impl State {
         let (player_x, player_y) = worldmap.rooms[0].center();
         let player_entity = spawner::player(&mut self.ecs, player_x, player_y);
         let mut player_pos = self.ecs.write_resource::<Point>();
+
         *player_pos = Point::new(player_x, player_y);
+
         let mut position_comps = self.ecs.write_storage::<Position>();
         let mut player_entity_writer = self.ecs.write_resource::<Entity>();
         *player_entity_writer = player_entity;
+
         let player_pos_comp = position_comps.get_mut(player_entity);
         if let Some(player_pos_comp) = player_pos_comp {
             player_pos_comp.x = player_x;
@@ -286,6 +293,8 @@ fn main() -> BError {
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to MQ".to_string()],
     });
+
+    gs.ecs.insert(particle_system::ParticleBuilder::new());
 
     main_loop(ctx, gs)
 }

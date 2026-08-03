@@ -1,5 +1,5 @@
-use super::{Map, components::*, gamelog::GameLog};
-use bracket_lib::pathfinding::field_of_view;
+use super::{Map, components::*, gamelog::GameLog, colors::*, particle_system::ParticleBuilder};
+use bracket_lib::{pathfinding::field_of_view, color::RGB, terminal::to_cp437};
 use specs::prelude::*;
 
 pub struct ItemCollectionSystem {}
@@ -59,6 +59,8 @@ impl<'a> System<'a> for ItemUseSystem {
         WriteExpect<'a, GameLog>,
         ReadExpect<'a, Map>,
         ReadStorage<'a, Name>,
+        WriteExpect<'a, ParticleBuilder>,
+        ReadStorage<'a, Position>,
         ReadStorage<'a, ProvidesHealing>,
         WriteStorage<'a, SufferDamage>,
         WriteStorage<'a, WantsToUseItem>,
@@ -79,6 +81,8 @@ impl<'a> System<'a> for ItemUseSystem {
             mut gamelog,
             map,
             names,
+            mut particle_builder,
+            positions,
             healing,
             mut suffer_damage,
             mut wants_use,
@@ -108,6 +112,7 @@ impl<'a> System<'a> for ItemUseSystem {
                                 for mob in map.tile_content[idx].iter() {
                                     targets.push(*mob);
                                 }
+                                particle_builder.requests(tile_idx.x, tile_idx.y, RGB::named(AOE_FG), RGB::named(LIT_BG), to_cp437('▒'), 200.0);
                             }
                         }
                     }
@@ -174,8 +179,12 @@ impl<'a> System<'a> for ItemUseSystem {
                                 item_name.name, mob_name.name, damage.damage
                             ));
                         }
-
                         used_item = true;
+
+                        let pos = positions.get(*mob);
+                        if let Some(pos) = pos {
+                            particle_builder.requests(pos.x, pos.y, RGB::named(DAMAGE_FG), RGB::named(LIT_BG), to_cp437('☼'), 200.0);
+                        }
                     }
                 }
             }
@@ -198,6 +207,11 @@ impl<'a> System<'a> for ItemUseSystem {
                                 ));
                             }
                             used_item = true;
+
+                            let pos = positions.get(*target);
+                            if let Some(pos) = pos {
+                                particle_builder.requests(pos.x, pos.y, RGB::named(HEAL_FG), RGB::named(LIT_BG), to_cp437('♥'), 200.0);
+                            }
                         }
                     }
                 }
@@ -221,6 +235,11 @@ impl<'a> System<'a> for ItemUseSystem {
                                 ));
                             }
                             used_item = true;
+
+                            let pos = positions.get(*mob);
+                            if let Some(pos) = pos {
+                                particle_builder.requests(pos.x, pos.y, RGB::named(CONFUSION_FG), RGB::named(LIT_BG), to_cp437('?'), 200.0);
+                            }
                         }
                     }
                 }

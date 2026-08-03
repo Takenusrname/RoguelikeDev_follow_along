@@ -23,6 +23,7 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<MeleePowerBonus>();
     ecs.register::<Monster>();
     ecs.register::<Name>();
+    ecs.register::<ParticleLifetime>();
     ecs.register::<Player>();
     ecs.register::<Position>();
     ecs.register::<ProvidesHealing>();
@@ -109,6 +110,11 @@ pub struct Monster {}
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Name {
     pub name: String,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct ParticleLifetime {
+    pub lifetime_ms: f32
 }
 
 #[derive(Component, Serialize, Deserialize, Clone)]

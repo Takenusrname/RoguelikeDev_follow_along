@@ -52,6 +52,13 @@ pub const SHIELD_FG: (u8, u8, u8) = DB32_COLOR12;
 pub const LSWORD_FG: (u8, u8, u8) = DB32_COLOR10;
 pub const TSHIELD_FG: (u8, u8, u8) = DB32_COLOR09;
 
+// Particles
+pub const ATTACK_FG: (u8, u8, u8) = DB32_COLOR27;
+pub const HEAL_FG: (u8, u8, u8) = DB32_COLOR23;
+pub const CONFUSION_FG: (u8, u8, u8) = DB32_COLOR03;
+pub const DAMAGE_FG: (u8, u8, u8) = DB32_COLOR05;
+pub const AOE_FG: (u8, u8,u8) = DB32_COLOR27;
+
 // UI
 pub const HP_FG: (u8, u8, u8) = DB32_COLOR05;
 pub const INV_BG: (u8, u8, u8) = DB32_COLOR14;

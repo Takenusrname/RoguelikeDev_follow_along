@@ -1,7 +1,8 @@
 use super::{
-    CombatStats, DefenseBonus, Equipped, MeleePowerBonus, Name, SufferDamage, WantsToMelee,
-    gamelog::GameLog,
+    CombatStats, DefenseBonus, Equipped, MeleePowerBonus, Name, Position, SufferDamage,
+    WantsToMelee, colors::*, gamelog::GameLog, particle_system::ParticleBuilder,
 };
+use bracket_lib::{color::RGB, terminal::to_cp437};
 use specs::prelude::*;
 
 pub struct MeleeCombatSystem {}
@@ -15,6 +16,8 @@ impl<'a> System<'a> for MeleeCombatSystem {
         WriteExpect<'a, GameLog>,
         ReadStorage<'a, MeleePowerBonus>,
         ReadStorage<'a, Name>,
+        WriteExpect<'a, ParticleBuilder>,
+        ReadStorage<'a, Position>,
         WriteStorage<'a, SufferDamage>,
         WriteStorage<'a, WantsToMelee>,
     );
@@ -28,6 +31,8 @@ impl<'a> System<'a> for MeleeCombatSystem {
             mut log,
             melee_power_bonus,
             names,
+            mut particle_builder,
+            positions,
             mut inflict_damage,
             mut wants_melee,
         ) = data;
@@ -37,7 +42,9 @@ impl<'a> System<'a> for MeleeCombatSystem {
         {
             if stats.hp > 0 {
                 let mut offenseive_bonus = 0;
-                for (_item_entity, power_bonus, equipped_by) in (&entities, &melee_power_bonus, &equipped).join() {
+                for (_item_entity, power_bonus, equipped_by) in
+                    (&entities, &melee_power_bonus, &equipped).join()
+                {
                     if equipped_by.owner == entity {
                         offenseive_bonus += power_bonus.power;
                     }
@@ -45,14 +52,31 @@ impl<'a> System<'a> for MeleeCombatSystem {
                 let target_stats = combat_stats.get(wants_melee.target).unwrap();
                 if target_stats.hp > 0 {
                     let target_name = names.get(wants_melee.target).unwrap();
-                    
+
                     let mut defensive_bonus = 0;
-                    for (_item_entity, defense_bonus, equipped_by) in (&entities, &defense_bonus, &equipped).join() {
+                    for (_item_entity, defense_bonus, equipped_by) in
+                        (&entities, &defense_bonus, &equipped).join()
+                    {
                         if equipped_by.owner == wants_melee.target {
                             defensive_bonus += defense_bonus.defense;
                         }
                     }
-                    let damage = i32::max(0, (stats.power + offenseive_bonus) - (target_stats.defense + defensive_bonus));
+
+                    let pos = positions.get(wants_melee.target);
+                    if let Some(pos) = pos {
+                        particle_builder.requests(
+                            pos.x,
+                            pos.y,
+                            RGB::named(ATTACK_FG),
+                            RGB::named(LIT_BG),
+                            to_cp437('☼'),
+                            200.0,
+                        );
+                    }
+                    let damage = i32::max(
+                        0,
+                        (stats.power + offenseive_bonus) - (target_stats.defense + defensive_bonus),
+                    );
 
                     if damage == 0 {
                         log.entries.push(format!(
