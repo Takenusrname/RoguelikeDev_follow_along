@@ -1,4 +1,4 @@
-use super::{CombatStats, Name, Player, SufferDamage, gamelog::GameLog, RunState};
+use super::{CombatStats, Map, Name, Player, Position, RunState, SufferDamage, gamelog::GameLog};
 use specs::prelude::*;
 
 pub struct DamageSystem {}
@@ -6,14 +6,22 @@ pub struct DamageSystem {}
 impl<'a> System<'a> for DamageSystem {
     type SystemData = (
         WriteStorage<'a, CombatStats>,
+        Entities<'a>,
+        WriteExpect<'a, Map>,
+        ReadStorage<'a, Position>,
         WriteStorage<'a, SufferDamage>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut stats, mut damage) = data;
+        let (mut stats, entities, mut map, positions, mut damage) = data;
 
-        for (stats, damage) in (&mut stats, &damage).join() {
+        for (entity, stats, damage) in (&entities, &mut stats, &damage).join() {
             stats.hp -= damage.amount.iter().sum::<i32>();
+            let pos = positions.get(entity);
+            if let Some(pos) = pos {
+                let idx = map.xy_idx(pos.x, pos.y);
+                map.bloodstains.insert(idx);
+            }
         }
 
         damage.clear();
@@ -42,7 +50,7 @@ pub fn delete_the_dead(ecs: &mut World) {
                     Some(_) => {
                         let mut runstate = ecs.write_resource::<RunState>();
                         *runstate = RunState::GameOver;
-                    },
+                    }
                 }
             }
         }

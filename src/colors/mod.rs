@@ -40,9 +40,10 @@ pub const FLOOR_BG: (u8, u8, u8) = DB32_COLOR31;
 pub const MEM_FG: (u8, u8, u8) = DB32_COLOR18;
 pub const AETHER: (u8, u8, u8) = DB32_COLOR18;
 pub const STAIRS_FG: (u8, u8, u8) = DB32_COLOR18;
+pub const BLOOD_BG: (u8, u8, u8) = DB32_COLOR05;
 
 // Items
-pub const POT_HEALTH_FG: (u8, u8, u8) = DB32_COLOR05;
+pub const POT_HEALTH_FG: (u8, u8, u8) = DB32_COLOR04;
 pub const SCROLL_MM_FG:(u8, u8,u8) = DB32_COLOR13;
 pub const SCROLL_FB_FG: (u8, u8, u8) = DB32_COLOR27;
 pub const SCROLL_CON_FG: (u8, u8, u8) = DB32_COLOR24;
