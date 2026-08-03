@@ -21,8 +21,8 @@ By a coincidence I started following Rust + RLTK tutorial the week before. I ori
         Here are some screenshots from this week:
     </summary>
 
-![title screen](/screenshots/mq_titlescreen.png)
-![inventory](/screenshots/mq_inventory.png)
+![title screen](/screenshots/w1/mq_titlescreen.png)
+![inventory](/screenshots/w1/mq_inventory.png)
 
 ## Week 2 - [Discussion post]()
 ## Week 3 - [Discussion post]()
