@@ -5,24 +5,29 @@ use specs::prelude::*;
 pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
     let mut newrunstate = rs;
     match newrunstate {
+        
         RunState::PreRun => {
             gs.run_systems();
             gs.ecs.maintain();
             newrunstate = RunState::AwaitingInput;
         }
+        
         RunState::AwaitingInput => {
             newrunstate = player_input(gs, ctx);
         }
+        
         RunState::PlayerTurn => {
             gs.run_systems();
             gs.ecs.maintain();
             newrunstate = RunState::MonsterTurn;
         }
+        
         RunState::MonsterTurn => {
             gs.run_systems();
             gs.ecs.maintain();
             newrunstate = RunState::AwaitingInput;
         }
+        
         RunState::ShowInventory => {
             let result = gui::show_inventory(gs, ctx, "use");
             match result.0 {
@@ -53,6 +58,7 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 }
             }
         }
+        
         RunState::ShowDropItem => {
             let result = gui::show_inventory(gs, ctx, "drop");
             match result.0 {
@@ -71,6 +77,26 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 }
             }
         }
+
+        RunState::ShowRemoveItem => {
+            let result = gui::show_inventory(gs, ctx, "unequip");
+            match result.0 {
+                gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+                gui::ItemMenuResult::NoResponse => {}
+                gui::ItemMenuResult::Selected => {
+                    let item_entity = result.1.unwrap();
+                    let mut intent = gs.ecs.write_storage::<WantsToRemoveItem>();
+                    intent
+                        .insert(
+                            *gs.ecs.fetch::<Entity>(),
+                            WantsToRemoveItem { item: item_entity },
+                        )
+                        .expect("Unable to insert intent");
+                    newrunstate = RunState::PlayerTurn;
+                }
+            }
+        }
+        
         RunState::ShowTargeting { range, item } => {
             let result = gui::ranged_target(gs, ctx, range);
             match result.0 {
@@ -91,6 +117,7 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 }
             }
         }
+        
         RunState::MainMenu { .. } => {
             let result = gui::main_menu(gs, ctx);
             match result {
@@ -111,12 +138,27 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 },
             }
         }
+
+        RunState::GameOver => {
+            let result = gui::game_over(ctx);
+            match result {
+                gui::GameOverResult::NoSelection => {}
+                gui::GameOverResult::QuitToMenu => {
+                    gs.game_over_cleanup();
+                    newrunstate = RunState::MainMenu {
+                        menu_sel: gui::MainMenuSelection::NewGame,
+                    };
+                }
+            }
+        }
+
         RunState::SaveGame => {
             saveload_system::save_game(&mut gs.ecs);
             newrunstate = RunState::MainMenu {
                 menu_sel: gui::MainMenuSelection::LoadGame,
             }
         }
+
         RunState::NextLevel => {
             gs.goto_next_level();
             newrunstate = RunState::PreRun;

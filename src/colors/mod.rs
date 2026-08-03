@@ -46,6 +46,11 @@ pub const POT_HEALTH_FG: (u8, u8, u8) = DB32_COLOR05;
 pub const SCROLL_MM_FG:(u8, u8,u8) = DB32_COLOR13;
 pub const SCROLL_FB_FG: (u8, u8, u8) = DB32_COLOR27;
 pub const SCROLL_CON_FG: (u8, u8, u8) = DB32_COLOR24;
+pub const DAGGER_FG: (u8, u8, u8) = DB32_COLOR13;
+pub const SHIELD_FG: (u8, u8, u8) = DB32_COLOR12;
+pub const LSWORD_FG: (u8, u8, u8) = DB32_COLOR10;
+pub const TSHIELD_FG: (u8, u8, u8) = DB32_COLOR09;
+
 // UI
 pub const HP_FG: (u8, u8, u8) = DB32_COLOR05;
 pub const INV_BG: (u8, u8, u8) = DB32_COLOR14;
@@ -58,3 +63,6 @@ pub const RANGE_BG: (u8, u8, u8) = DB32_COLOR15;
 pub const VALID_BG: (u8, u8, u8) = DB32_COLOR13;
 pub const INVALID_BG: (u8, u8, u8) = DB32_COLOR05;
 pub const TITLE_FG: (u8, u8, u8) = DB32_COLOR24;
+pub const ERROR_BG: (u8, u8, u8) = DB32_COLOR03;
+pub const UNEQUIP_BG: (u8, u8, u8) = DB32_COLOR27;
+pub const DEATH_FG: (u8, u8, u8) = DB32_COLOR05;

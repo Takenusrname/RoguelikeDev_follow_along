@@ -14,9 +14,13 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<CombatStats>();
     ecs.register::<Confusion>();
     ecs.register::<Consumable>();
+    ecs.register::<DefenseBonus>();
+    ecs.register::<Equippable>();
+    ecs.register::<Equipped>();
     ecs.register::<InBackpack>();
     ecs.register::<InflictsDamage>();
     ecs.register::<Item>();
+    ecs.register::<MeleePowerBonus>();
     ecs.register::<Monster>();
     ecs.register::<Name>();
     ecs.register::<Player>();
@@ -32,6 +36,7 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<WantsToDropItem>();
     ecs.register::<WantsToMelee>();
     ecs.register::<WantsToPickupItem>();
+    ecs.register::<WantsToRemoveItem>();
 }
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
@@ -58,6 +63,28 @@ pub struct Confusion {
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Consumable {}
 
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct DefenseBonus {
+    pub defense: i32,
+}
+
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
+pub enum EquipmentSlot {
+    Melee,
+    Shield,
+}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Equippable {
+    pub slot: EquipmentSlot,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct Equipped {
+    pub owner: Entity,
+    pub slot: EquipmentSlot,
+}
+
 #[derive(Component, Debug, ConvertSaveload)]
 pub struct InBackpack {
     pub owner: Entity,
@@ -70,6 +97,11 @@ pub struct InflictsDamage {
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Item {}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct MeleePowerBonus {
+    pub power: i32,
+}
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Monster {}
@@ -157,5 +189,10 @@ pub struct WantsToMelee {
 #[derive(Component, Debug, ConvertSaveload)]
 pub struct WantsToPickupItem {
     pub collected_by: Entity,
+    pub item: Entity,
+}
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct WantsToRemoveItem {
     pub item: Entity,
 }

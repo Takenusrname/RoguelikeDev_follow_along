@@ -1,7 +1,4 @@
-use super::{
-    CombatStats, InBackpack, Map, Name, Player, Position, RunState, State, Viewshed, colors::*,
-    gamelog::GameLog,
-};
+use super::{Map, RunState, State, Viewshed, colors::*, components::*, gamelog::GameLog};
 use bracket_lib::{
     color::RGB,
     geometry::{Point, Rect},
@@ -27,6 +24,12 @@ pub enum MainMenuSelection {
 pub enum MainMenuResult {
     NoSelection { selected: MainMenuSelection },
     Selected { selected: MainMenuSelection },
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum GameOverResult {
+    NoSelection,
+    QuitToMenu,
 }
 
 pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
@@ -159,9 +162,18 @@ fn draw_tooltips(ecs: &World, ctx: &mut BTerm) {
     }
 }
 
-fn inventory_frame(ctx: &mut BTerm, count: usize, x: i32, y: i32, w: i32, fg: RGB, bg: RGB) {
+fn inventory_frame(
+    ctx: &mut BTerm,
+    count: usize,
+    x: i32,
+    y: i32,
+    w: i32,
+    fg: RGB,
+    bg: RGB,
+    title: &str,
+) {
     let bg_rect = Rect::with_size(x, y - 2, w, (count + 3) as i32);
-    let menu_text: &str = " Inventory ";
+    let menu_text: &str = title;
     let esc_text: &str = " ESC to Cancel ";
 
     let start_char = to_cp437('┤');
@@ -203,6 +215,7 @@ pub fn show_inventory(
     let names = gs.ecs.read_storage::<Name>();
     let backpack = gs.ecs.read_storage::<InBackpack>();
     let entities = gs.ecs.entities();
+    let equiped = gs.ecs.read_storage::<Equipped>();
 
     let inventory = (&backpack, &names)
         .join()
@@ -215,26 +228,45 @@ pub fn show_inventory(
 
     let fg = RGB::named(DEFAULT_FG);
     let bg: RGB;
+    let title: &str;
     if action == "drop" {
+        title = " Inventory - Drop Item ";
         bg = RGB::named(DROP_BG);
     } else if action == "use" {
+        title = " Inventory - Use Item ";
         bg = RGB::named(INV_BG);
+    } else if action == "unequip" {
+        title = " Inventory - Unequip Item ";
+        bg = RGB::named(UNEQUIP_BG);
     } else {
-        bg = RGB::named(DEFAULT_BG);
+        title = " Error - Not Implemented ";
+        bg = RGB::named(ERROR_BG);
     }
 
-    inventory_frame(ctx, count, x, y, w, fg, bg);
+    inventory_frame(ctx, count, x, y, w, fg, bg, title);
 
     let mut equippable: Vec<Entity> = Vec::new();
     let mut j = 0;
-    for (entity, _pack, name) in (&entities, &backpack, &names)
-        .join()
-        .filter(|item| item.1.owner == *player_entity)
-    {
-        inventory_selection(ctx, x + 2, y, fg, bg, 65 + j, &name.name.to_string());
-        equippable.push(entity);
-        y += 1;
-        j += 1;
+    if action == "unequip" {
+        for (entity, _pack_equipped, name) in (&entities, &equiped, &names)
+            .join()
+            .filter(|item| item.1.owner == *player_entity)
+        {
+            inventory_selection(ctx, x + 2, y, fg, bg, 65 + j, &name.name.to_string());
+            equippable.push(entity);
+            y += 1;
+            j += 1;
+        }
+    } else {
+        for (entity, _pack, name) in (&entities, &backpack, &names)
+            .join()
+            .filter(|item| item.1.owner == *player_entity)
+        {
+            inventory_selection(ctx, x + 2, y, fg, bg, 65 + j, &name.name.to_string());
+            equippable.push(entity);
+            y += 1;
+            j += 1;
+        }
     }
 
     match ctx.key {
@@ -397,5 +429,20 @@ pub fn main_menu(gs: &mut State, ctx: &mut BTerm) -> MainMenuResult {
     }
     MainMenuResult::NoSelection {
         selected: MainMenuSelection::NewGame,
+    }
+}
+
+pub fn game_over(ctx: &mut BTerm) -> GameOverResult {
+    ctx.cls_bg(RGB::named(DEFAULT_BG));
+    let line1 = "You DIED!";
+    let line2 = "You Failed to finish your Quest.";
+    let line3 = "Press any key to return to the Menu";
+    ctx.print_color_centered(15, RGB::named(DEATH_FG), RGB::named(DEFAULT_BG), line1);
+    ctx.print_color_centered(17, RGB::named(DEFAULT_FG), RGB::named(DEFAULT_BG), line2);
+    ctx.print_color_centered(19, RGB::named(TITLE_FG), RGB::named(DEFAULT_BG), line3);
+
+    match ctx.key {
+        None => GameOverResult::NoSelection,
+        Some(_) => GameOverResult::QuitToMenu,
     }
 }

@@ -12,7 +12,9 @@ use specs::{
     },
 };
 use std::fs::File;
-use std::{convert::Infallible as NoError, fs, path::Path};
+use std::{convert::Infallible, fs, path::Path};
+/// Spec's Documentation has it like this
+pub type NoError = Infallible;
 
 macro_rules! serialize_individually {
     ($ecs:expr, $ser:expr, $data:expr, $( $type:ty),*) => {
@@ -83,7 +85,10 @@ pub fn save_game(ecs: &mut World) {
             WantsToPickupItem,
             WantsToUseItem,
             WantsToDropItem,
-            SerializationHelper
+            SerializationHelper,
+            Equippable,
+            Equipped,
+            WantsToRemoveItem
         );
     }
 
@@ -135,7 +140,10 @@ pub fn load_game(ecs: &mut World) {
             WantsToPickupItem,
             WantsToUseItem,
             WantsToDropItem,
-            SerializationHelper
+            SerializationHelper,
+            Equippable,
+            Equipped,
+            WantsToRemoveItem
         );
     }
 

@@ -165,6 +165,7 @@ pub fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
             VirtualKeyCode::I => return RunState::ShowInventory,
             VirtualKeyCode::D => return RunState::ShowDropItem,
             VirtualKeyCode::Escape => return RunState::SaveGame,
+            VirtualKeyCode::R => return RunState::ShowRemoveItem,
 
             VirtualKeyCode::Period => {
                 if try_next_level(&mut gs.ecs) {

@@ -5,7 +5,7 @@ use bracket_lib::{
     geometry::{DistanceAlg::Pythagoras, Point},
     prelude::SmallVec,
     random::RandomNumberGenerator,
-    terminal::{BTerm, to_cp437},
+    terminal::{BTerm, FontCharType, to_cp437},
 };
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
@@ -246,6 +246,9 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
     }
 }
 
+/// Checks if the tile is in bounds.
+/// if the tile is inbounds it returns true and
+/// if it is out of bounds it returns false
 pub fn is_inbounds(map: &Map, x: i32, y: i32) -> bool {
     if x < 0 || x > map.width - 1 || y < 0 || y > map.height - 1 {
         return false;
@@ -254,16 +257,18 @@ pub fn is_inbounds(map: &Map, x: i32, y: i32) -> bool {
     }
 }
 
+/// Checks if the tile is a wall and it's reviealed
 fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
     let idx = map.xy_idx(x, y);
     map.tiles[idx] == TileType::Wall && map.revealed_tiles[idx]
 }
 
-fn wall_glyph(map: &Map, x: i32, y: i32) -> rltk::FontCharType {
-    // if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 as i32 { return 35; }
-
+/// Checks if the wall tile has other wall tiles if it does
+/// it grabs the glyph tied to the mask depending how many
+/// other wall are next to it.
+fn wall_glyph(map: &Map, x: i32, y: i32) -> FontCharType {
     /*
-    4-bit mask values
+    8-bit mask values
     1, 2, 4, 8
 
       1
