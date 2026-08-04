@@ -3,8 +3,8 @@ use specs::prelude::*;
 use std::cmp::{max, min};
 
 use super::{
-    CombatStats, HungerClock, HungerState, Item, Map, Monster, Player, Position, RunState, State,
-    TileType, Viewshed, WantsToMelee, WantsToPickupItem, gamelog::GameLog,
+    CombatStats, EntityMoved, HungerClock, HungerState, Item, Map, Monster, Player, Position,
+    RunState, State, TileType, Viewshed, WantsToMelee, WantsToPickupItem, gamelog::GameLog,
 };
 
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
@@ -15,6 +15,7 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut positions = ecs.write_storage::<Position>();
     let mut viewsheds = ecs.write_storage::<Viewshed>();
     let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
+    let mut entity_moved = ecs.write_storage::<EntityMoved>();
 
     for (entity, _player, pos, viewshed) in
         (&entities, &mut players, &mut positions, &mut viewsheds).join()
@@ -47,6 +48,9 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
         if !map.blocked[dest_idx] {
             pos.x = min(79, max(0, pos.x + delta_x));
             pos.y = min(49, max(0, pos.y + delta_y));
+            entity_moved
+                .insert(entity, EntityMoved {})
+                .expect("Unable to insert marker");
 
             viewshed.dirty = true;
             let mut ppos = ecs.write_resource::<Point>();

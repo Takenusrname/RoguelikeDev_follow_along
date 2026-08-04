@@ -28,6 +28,7 @@ fn room_table(map_depth: i32) -> RandomTable {
         .add("Tower Shield", map_depth - 1)
         .add("Rations", 10)
         .add("Magic Mapping Scroll", 2)
+        .add("Bear Trap", 100)
 }
 
 pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
@@ -74,6 +75,7 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
             "Tower Shield" => tower_shield(ecs, x, y),
             "Rations" => rations(ecs, x, y),
             "Magic Mapping Scroll" => magic_mapping_scroll(ecs, x, y),
+            "Bear Trap" => bear_trap(ecs, x, y),
             _ => {}
         }
     }
@@ -348,6 +350,26 @@ fn magic_mapping_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Item {})
         .with(MagicMapper {})
         .with(Consumable {})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn bear_trap(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: to_cp437('^'),
+            fg: RGB::named(BEARTRAP_FG),
+            bg: RGB::named(LIT_BG),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Bear Trap".to_string(),
+        })
+        .with(Hidden {})
+        .with(EntryTrigger {})
+        .with(InflictsDamage{ damage: 6 })
+        .with(SingleActivation{})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }

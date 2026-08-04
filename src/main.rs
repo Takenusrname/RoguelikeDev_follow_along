@@ -38,6 +38,7 @@ pub mod saveload_system;
 mod spawner;
 mod statemachine;
 use statemachine::current_state;
+mod trigger_system;
 mod visibility_system;
 use visibility_system::VisibilitySystem;
 
@@ -96,6 +97,8 @@ impl State {
         vis.run_now(&self.ecs);
         let mut mob = MonsterAI {};
         mob.run_now(&self.ecs);
+        let mut triggers = trigger_system::TriggerSystem{};
+        triggers.run_now(&self.ecs);
         let mut mapindex = MapIndexingSystem {};
         mapindex.run_now(&self.ecs);
         let mut melee = MeleeCombatSystem {};

@@ -15,8 +15,11 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<Confusion>();
     ecs.register::<Consumable>();
     ecs.register::<DefenseBonus>();
+    ecs.register::<EntityMoved>();
+    ecs.register::<EntryTrigger>();
     ecs.register::<Equippable>();
     ecs.register::<Equipped>();
+    ecs.register::<Hidden>();
     ecs.register::<HungerClock>();
     ecs.register::<InBackpack>();
     ecs.register::<InflictsDamage>();
@@ -33,6 +36,7 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<Ranged>();
     ecs.register::<Renderable>();
     ecs.register::<SerializationHelper>();
+    ecs.register::<SingleActivation>();
     ecs.register::<SimpleMarker<SerializeMe>>();
     ecs.register::<SufferDamage>();
     ecs.register::<Viewshed>();
@@ -72,6 +76,12 @@ pub struct DefenseBonus {
     pub defense: i32,
 }
 
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct EntityMoved {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct EntryTrigger {}
+
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum EquipmentSlot {
     Melee,
@@ -88,6 +98,9 @@ pub struct Equipped {
     pub owner: Entity,
     pub slot: EquipmentSlot,
 }
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Hidden {}
 
 #[derive(Serialize, Deserialize, Copy, Clone, PartialEq)]
 pub enum HungerState {
@@ -173,6 +186,9 @@ pub struct SerializationHelper {
 }
 
 pub struct SerializeMe;
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct SingleActivation {}
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct SufferDamage {

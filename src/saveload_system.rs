@@ -91,7 +91,11 @@ pub fn save_game(ecs: &mut World) {
             WantsToRemoveItem,
             ParticleLifetime,
             HungerClock,
-            ProvidesFood
+            ProvidesFood,
+            Hidden,
+            EntryTrigger,
+            EntityMoved,
+            SingleActivation
         );
     }
 
@@ -149,7 +153,11 @@ pub fn load_game(ecs: &mut World) {
             WantsToRemoveItem,
             ParticleLifetime,
             HungerClock,
-            ProvidesFood
+            ProvidesFood,
+            Hidden,
+            EntryTrigger,
+            EntityMoved,
+            SingleActivation
         );
     }
 
