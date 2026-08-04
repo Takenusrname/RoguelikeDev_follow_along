@@ -15,20 +15,28 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<Confusion>();
     ecs.register::<Consumable>();
     ecs.register::<DefenseBonus>();
+    ecs.register::<EntityMoved>();
+    ecs.register::<EntryTrigger>();
     ecs.register::<Equippable>();
     ecs.register::<Equipped>();
+    ecs.register::<Hidden>();
+    ecs.register::<HungerClock>();
     ecs.register::<InBackpack>();
     ecs.register::<InflictsDamage>();
     ecs.register::<Item>();
+    ecs.register::<MagicMapper>();
     ecs.register::<MeleePowerBonus>();
     ecs.register::<Monster>();
     ecs.register::<Name>();
+    ecs.register::<ParticleLifetime>();
     ecs.register::<Player>();
     ecs.register::<Position>();
+    ecs.register::<ProvidesFood>();
     ecs.register::<ProvidesHealing>();
     ecs.register::<Ranged>();
     ecs.register::<Renderable>();
     ecs.register::<SerializationHelper>();
+    ecs.register::<SingleActivation>();
     ecs.register::<SimpleMarker<SerializeMe>>();
     ecs.register::<SufferDamage>();
     ecs.register::<Viewshed>();
@@ -68,6 +76,12 @@ pub struct DefenseBonus {
     pub defense: i32,
 }
 
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct EntityMoved {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct EntryTrigger {}
+
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum EquipmentSlot {
     Melee,
@@ -85,6 +99,23 @@ pub struct Equipped {
     pub slot: EquipmentSlot,
 }
 
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Hidden {}
+
+#[derive(Serialize, Deserialize, Copy, Clone, PartialEq)]
+pub enum HungerState {
+    WellFed,
+    Normal,
+    Hungry,
+    Starving,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct HungerClock {
+    pub state: HungerState,
+    pub duration: i32,
+}
+
 #[derive(Component, Debug, ConvertSaveload)]
 pub struct InBackpack {
     pub owner: Entity,
@@ -97,6 +128,9 @@ pub struct InflictsDamage {
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Item {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct MagicMapper {}
 
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct MeleePowerBonus {
@@ -111,6 +145,11 @@ pub struct Name {
     pub name: String,
 }
 
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct ParticleLifetime {
+    pub lifetime_ms: f32,
+}
+
 #[derive(Component, Serialize, Deserialize, Clone)]
 pub struct Player {}
 
@@ -119,6 +158,9 @@ pub struct Position {
     pub x: i32,
     pub y: i32,
 }
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct ProvidesFood {}
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct ProvidesHealing {
@@ -144,6 +186,9 @@ pub struct SerializationHelper {
 }
 
 pub struct SerializeMe;
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct SingleActivation {}
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct SufferDamage {

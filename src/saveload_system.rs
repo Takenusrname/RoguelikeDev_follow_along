@@ -88,7 +88,14 @@ pub fn save_game(ecs: &mut World) {
             SerializationHelper,
             Equippable,
             Equipped,
-            WantsToRemoveItem
+            WantsToRemoveItem,
+            ParticleLifetime,
+            HungerClock,
+            ProvidesFood,
+            Hidden,
+            EntryTrigger,
+            EntityMoved,
+            SingleActivation
         );
     }
 
@@ -143,7 +150,14 @@ pub fn load_game(ecs: &mut World) {
             SerializationHelper,
             Equippable,
             Equipped,
-            WantsToRemoveItem
+            WantsToRemoveItem,
+            ParticleLifetime,
+            HungerClock,
+            ProvidesFood,
+            Hidden,
+            EntryTrigger,
+            EntityMoved,
+            SingleActivation
         );
     }
 

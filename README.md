@@ -4,8 +4,16 @@
 
 A yearly event to encourage someone to start creating a roguelike. If you want to learn more click [Here](https://www.reddit.com/r/roguelikedev/comments/1vd9noj/roguelikedev_does_the_complete_roguelike_tutorial/).
 
+### Requirements
++ Rust - version = 1.97.0
++ Bracket-lib - version = 0.8.7 feature - serde
++ Specs - version = 0.20 feature -serde
++ Specs_derive - version = 0.4.1 
++ serde - version = 1 feature - derive
++ serde_json - version = 1
 
-Weekly log of thoughts
+
+## Weekly log of thoughts
 
 <details>
     <summary>
@@ -21,8 +29,8 @@ By a coincidence I started following Rust + RLTK tutorial the week before. I ori
         Here are some screenshots from this week:
     </summary>
 
-![title screen](/screenshots/mq_titlescreen.png)
-![inventory](/screenshots/mq_inventory.png)
+![title screen](/screenshots/w1/mq_titlescreen.png)
+![inventory](/screenshots/w1/mq_inventory.png)
 
 ## Week 2 - [Discussion post]()
 ## Week 3 - [Discussion post]()

@@ -9,7 +9,10 @@ use bracket_lib::{
 };
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    collections::HashSet,
+};
 
 pub const MAPWIDTH: usize = 80;
 pub const MAPHEIGHT: usize = 43;
@@ -32,6 +35,7 @@ pub struct Map {
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
     pub depth: i32,
+    pub bloodstains: HashSet<usize>,
 
     #[serde(skip)]
     pub tile_content: Vec<Vec<Entity>>,
@@ -154,6 +158,7 @@ impl Map {
             blocked: vec![false; MAPCOUNT],
             tile_content: vec![Vec::new(); MAPCOUNT],
             depth: new_depth,
+            bloodstains: HashSet::new(),
         };
 
         const MAX_ROOMS: i32 = 30;
@@ -227,6 +232,7 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
                     bg = RGB::named(DEFAULT_BG);
                 }
             }
+            if map.bloodstains.contains(&idx) { bg = RGB::named(BLOOD_BG);}
             if !map.visible_tiles[idx] {
                 fg = RGB::named(MEM_FG);
                 bg = RGB::named(DEFAULT_BG);

@@ -40,9 +40,10 @@ pub const FLOOR_BG: (u8, u8, u8) = DB32_COLOR31;
 pub const MEM_FG: (u8, u8, u8) = DB32_COLOR18;
 pub const AETHER: (u8, u8, u8) = DB32_COLOR18;
 pub const STAIRS_FG: (u8, u8, u8) = DB32_COLOR18;
+pub const BLOOD_BG: (u8, u8, u8) = DB32_COLOR05;
 
 // Items
-pub const POT_HEALTH_FG: (u8, u8, u8) = DB32_COLOR05;
+pub const POT_HEALTH_FG: (u8, u8, u8) = DB32_COLOR04;
 pub const SCROLL_MM_FG:(u8, u8,u8) = DB32_COLOR13;
 pub const SCROLL_FB_FG: (u8, u8, u8) = DB32_COLOR27;
 pub const SCROLL_CON_FG: (u8, u8, u8) = DB32_COLOR24;
@@ -50,6 +51,16 @@ pub const DAGGER_FG: (u8, u8, u8) = DB32_COLOR13;
 pub const SHIELD_FG: (u8, u8, u8) = DB32_COLOR12;
 pub const LSWORD_FG: (u8, u8, u8) = DB32_COLOR10;
 pub const TSHIELD_FG: (u8, u8, u8) = DB32_COLOR09;
+pub const RATION_FG: (u8, u8, u8) = DB32_COLOR26;
+pub const MAP_SCROLL_FG: (u8, u8, u8) = DB32_COLOR06;
+pub const BEARTRAP_FG: (u8, u8,u8) = DB32_COLOR27;
+
+// Particles
+pub const ATTACK_FG: (u8, u8, u8) = DB32_COLOR27;
+pub const HEAL_FG: (u8, u8, u8) = DB32_COLOR23;
+pub const CONFUSION_FG: (u8, u8, u8) = DB32_COLOR03;
+pub const DAMAGE_FG: (u8, u8, u8) = DB32_COLOR05;
+pub const AOE_FG: (u8, u8,u8) = DB32_COLOR27;
 
 // UI
 pub const HP_FG: (u8, u8, u8) = DB32_COLOR05;
@@ -66,3 +77,9 @@ pub const TITLE_FG: (u8, u8, u8) = DB32_COLOR24;
 pub const ERROR_BG: (u8, u8, u8) = DB32_COLOR03;
 pub const UNEQUIP_BG: (u8, u8, u8) = DB32_COLOR27;
 pub const DEATH_FG: (u8, u8, u8) = DB32_COLOR05;
+
+// Hunger
+pub const WF_FG: (u8, u8, u8) = DB32_COLOR23;
+pub const FED_FG: (u8, u8, u8) = DB32_COLOR22;
+pub const HUNGRY_FG: (u8, u8, u8) = DB32_COLOR27;
+pub const STARVE_FG: (u8, u8, u8) = DB32_COLOR05;

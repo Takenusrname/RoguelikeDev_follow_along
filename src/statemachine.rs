@@ -1,33 +1,39 @@
-use super::{RunState, State, components::*, gui, player_input, saveload_system};
+use super::{
+    MAPHEIGHT, MAPWIDTH, Map, RunState, State, components::*, gui, player_input, saveload_system,
+};
 use bracket_lib::terminal::BTerm;
 use specs::prelude::*;
 
 pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
     let mut newrunstate = rs;
     match newrunstate {
-        
         RunState::PreRun => {
             gs.run_systems();
             gs.ecs.maintain();
             newrunstate = RunState::AwaitingInput;
         }
-        
+
         RunState::AwaitingInput => {
             newrunstate = player_input(gs, ctx);
         }
-        
+
         RunState::PlayerTurn => {
             gs.run_systems();
             gs.ecs.maintain();
-            newrunstate = RunState::MonsterTurn;
+            match *gs.ecs.fetch::<RunState>() {
+                RunState::MagicMapReveal { .. } => {
+                    newrunstate = RunState::MagicMapReveal { row: 0 }
+                }
+                _ => newrunstate = RunState::MonsterTurn,
+            }
         }
-        
+
         RunState::MonsterTurn => {
             gs.run_systems();
             gs.ecs.maintain();
             newrunstate = RunState::AwaitingInput;
         }
-        
+
         RunState::ShowInventory => {
             let result = gui::show_inventory(gs, ctx, "use");
             match result.0 {
@@ -58,7 +64,7 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 }
             }
         }
-        
+
         RunState::ShowDropItem => {
             let result = gui::show_inventory(gs, ctx, "drop");
             match result.0 {
@@ -96,7 +102,7 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 }
             }
         }
-        
+
         RunState::ShowTargeting { range, item } => {
             let result = gui::ranged_target(gs, ctx, range);
             match result.0 {
@@ -117,7 +123,7 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 }
             }
         }
-        
+
         RunState::MainMenu { .. } => {
             let result = gui::main_menu(gs, ctx);
             match result {
@@ -162,6 +168,19 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
         RunState::NextLevel => {
             gs.goto_next_level();
             newrunstate = RunState::PreRun;
+        }
+
+        RunState::MagicMapReveal { row } => {
+            let mut map = gs.ecs.fetch_mut::<Map>();
+            for x in 0..MAPWIDTH {
+                let idx = map.xy_idx(x as i32, row);
+                map.revealed_tiles[idx] = true;
+            }
+            if row as usize == MAPHEIGHT - 1 {
+                newrunstate = RunState::MonsterTurn;
+            } else {
+                newrunstate = RunState::MagicMapReveal { row: row + 1 }
+            }
         }
     }
 
