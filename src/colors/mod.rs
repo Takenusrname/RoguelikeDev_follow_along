@@ -52,6 +52,7 @@ pub const SHIELD_FG: (u8, u8, u8) = DB32_COLOR12;
 pub const LSWORD_FG: (u8, u8, u8) = DB32_COLOR10;
 pub const TSHIELD_FG: (u8, u8, u8) = DB32_COLOR09;
 pub const RATION_FG: (u8, u8, u8) = DB32_COLOR26;
+pub const MAP_SCROLL_FG: (u8, u8, u8) = DB32_COLOR06;
 
 // Particles
 pub const ATTACK_FG: (u8, u8, u8) = DB32_COLOR27;

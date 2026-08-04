@@ -57,6 +57,7 @@ pub enum RunState {
     NextLevel,
     ShowRemoveItem,
     GameOver,
+    MagicMapReveal { row: i32 },
 }
 
 struct State {
@@ -112,7 +113,7 @@ impl State {
         hunger.run_now(&self.ecs);
         let mut particles = particle_system::ParticleSpawnSystem {};
         particles.run_now(&self.ecs);
-        
+
         self.ecs.maintain();
     }
 

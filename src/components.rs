@@ -21,6 +21,7 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<InBackpack>();
     ecs.register::<InflictsDamage>();
     ecs.register::<Item>();
+    ecs.register::<MagicMapper>();
     ecs.register::<MeleePowerBonus>();
     ecs.register::<Monster>();
     ecs.register::<Name>();
@@ -114,6 +115,9 @@ pub struct InflictsDamage {
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct Item {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct MagicMapper {}
 
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct MeleePowerBonus {

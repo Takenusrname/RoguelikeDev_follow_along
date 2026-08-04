@@ -1,4 +1,6 @@
-use super::{Map, colors::*, components::*, gamelog::GameLog, particle_system::ParticleBuilder};
+use super::{
+    Map, RunState, colors::*, components::*, gamelog::GameLog, particle_system::ParticleBuilder,
+};
 use bracket_lib::{color::RGB, pathfinding::field_of_view, terminal::to_cp437};
 use specs::prelude::*;
 
@@ -58,12 +60,14 @@ impl<'a> System<'a> for ItemUseSystem {
         WriteStorage<'a, InBackpack>,
         ReadStorage<'a, InflictsDamage>,
         WriteExpect<'a, GameLog>,
-        ReadExpect<'a, Map>,
+        ReadStorage<'a, MagicMapper>,
+        WriteExpect<'a, Map>,
         ReadStorage<'a, Name>,
         WriteExpect<'a, ParticleBuilder>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, ProvidesFood>,
         ReadStorage<'a, ProvidesHealing>,
+        WriteExpect<'a, RunState>,
         WriteStorage<'a, SufferDamage>,
         WriteStorage<'a, WantsToUseItem>,
     );
@@ -82,12 +86,14 @@ impl<'a> System<'a> for ItemUseSystem {
             mut backpack,
             inflict_damage,
             mut gamelog,
+            magic_mapper,
             map,
             names,
             mut particle_builder,
             positions,
             provides_food,
             healing,
+            mut runstate,
             mut suffer_damage,
             mut wants_use,
         ) = data;
@@ -190,6 +196,18 @@ impl<'a> System<'a> for ItemUseSystem {
                             names.get(useitem.item).unwrap().name
                         ));
                     }
+                }
+            }
+
+            let is_mapper = magic_mapper.get(useitem.item);
+            match is_mapper {
+                None => {}
+                Some(_) => {
+                    used_item = true;
+                    gamelog
+                        .entries
+                        .push("The map is revealed to you!".to_string());
+                    *runstate = RunState::MagicMapReveal { row: 0 };
                 }
             }
 
