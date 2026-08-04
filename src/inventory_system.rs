@@ -1,5 +1,5 @@
-use super::{Map, components::*, gamelog::GameLog, colors::*, particle_system::ParticleBuilder};
-use bracket_lib::{pathfinding::field_of_view, color::RGB, terminal::to_cp437};
+use super::{Map, colors::*, components::*, gamelog::GameLog, particle_system::ParticleBuilder};
+use bracket_lib::{color::RGB, pathfinding::field_of_view, terminal::to_cp437};
 use specs::prelude::*;
 
 pub struct ItemCollectionSystem {}
@@ -54,6 +54,7 @@ impl<'a> System<'a> for ItemUseSystem {
         WriteStorage<'a, Equipped>,
         Entities<'a>,
         ReadExpect<'a, Entity>,
+        WriteStorage<'a, HungerClock>,
         WriteStorage<'a, InBackpack>,
         ReadStorage<'a, InflictsDamage>,
         WriteExpect<'a, GameLog>,
@@ -61,6 +62,7 @@ impl<'a> System<'a> for ItemUseSystem {
         ReadStorage<'a, Name>,
         WriteExpect<'a, ParticleBuilder>,
         ReadStorage<'a, Position>,
+        ReadStorage<'a, ProvidesFood>,
         ReadStorage<'a, ProvidesHealing>,
         WriteStorage<'a, SufferDamage>,
         WriteStorage<'a, WantsToUseItem>,
@@ -76,6 +78,7 @@ impl<'a> System<'a> for ItemUseSystem {
             mut equipped,
             entities,
             player_entity,
+            mut hunger_clocks,
             mut backpack,
             inflict_damage,
             mut gamelog,
@@ -83,6 +86,7 @@ impl<'a> System<'a> for ItemUseSystem {
             names,
             mut particle_builder,
             positions,
+            provides_food,
             healing,
             mut suffer_damage,
             mut wants_use,
@@ -112,7 +116,14 @@ impl<'a> System<'a> for ItemUseSystem {
                                 for mob in map.tile_content[idx].iter() {
                                     targets.push(*mob);
                                 }
-                                particle_builder.requests(tile_idx.x, tile_idx.y, RGB::named(AOE_FG), RGB::named(LIT_BG), to_cp437('▒'), 200.0);
+                                particle_builder.requests(
+                                    tile_idx.x,
+                                    tile_idx.y,
+                                    RGB::named(AOE_FG),
+                                    RGB::named(LIT_BG),
+                                    to_cp437('▒'),
+                                    200.0,
+                                );
                             }
                         }
                     }
@@ -164,6 +175,24 @@ impl<'a> System<'a> for ItemUseSystem {
                 }
             }
 
+            let item_edible = provides_food.get(useitem.item);
+            match item_edible {
+                None => {}
+                Some(_) => {
+                    used_item = true;
+                    let target = targets[0];
+                    let hc = hunger_clocks.get_mut(target);
+                    if let Some(hc) = hc {
+                        hc.state = HungerState::WellFed;
+                        hc.duration = 20;
+                        gamelog.entries.push(format!(
+                            "You eat the {}.",
+                            names.get(useitem.item).unwrap().name
+                        ));
+                    }
+                }
+            }
+
             let item_damage = inflict_damage.get(useitem.item);
             match item_damage {
                 None => {}
@@ -183,7 +212,14 @@ impl<'a> System<'a> for ItemUseSystem {
 
                         let pos = positions.get(*mob);
                         if let Some(pos) = pos {
-                            particle_builder.requests(pos.x, pos.y, RGB::named(DAMAGE_FG), RGB::named(LIT_BG), to_cp437('☼'), 200.0);
+                            particle_builder.requests(
+                                pos.x,
+                                pos.y,
+                                RGB::named(DAMAGE_FG),
+                                RGB::named(LIT_BG),
+                                to_cp437('☼'),
+                                200.0,
+                            );
                         }
                     }
                 }
@@ -210,7 +246,14 @@ impl<'a> System<'a> for ItemUseSystem {
 
                             let pos = positions.get(*target);
                             if let Some(pos) = pos {
-                                particle_builder.requests(pos.x, pos.y, RGB::named(HEAL_FG), RGB::named(LIT_BG), to_cp437('♥'), 200.0);
+                                particle_builder.requests(
+                                    pos.x,
+                                    pos.y,
+                                    RGB::named(HEAL_FG),
+                                    RGB::named(LIT_BG),
+                                    to_cp437('♥'),
+                                    200.0,
+                                );
                             }
                         }
                     }
@@ -238,7 +281,14 @@ impl<'a> System<'a> for ItemUseSystem {
 
                             let pos = positions.get(*mob);
                             if let Some(pos) = pos {
-                                particle_builder.requests(pos.x, pos.y, RGB::named(CONFUSION_FG), RGB::named(LIT_BG), to_cp437('?'), 200.0);
+                                particle_builder.requests(
+                                    pos.x,
+                                    pos.y,
+                                    RGB::named(CONFUSION_FG),
+                                    RGB::named(LIT_BG),
+                                    to_cp437('?'),
+                                    200.0,
+                                );
                             }
                         }
                     }
@@ -334,7 +384,9 @@ impl<'a> System<'a> for ItemRemoveSystem {
 
         for (entity, to_remove) in (&entities, &wants_remove).join() {
             equipped.remove(to_remove.item);
-            backpack.insert(to_remove.item, InBackpack { owner: entity }).expect("Unable to insert backpack");
+            backpack
+                .insert(to_remove.item, InBackpack { owner: entity })
+                .expect("Unable to insert backpack");
         }
 
         wants_remove.clear();

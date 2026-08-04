@@ -17,6 +17,7 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<DefenseBonus>();
     ecs.register::<Equippable>();
     ecs.register::<Equipped>();
+    ecs.register::<HungerClock>();
     ecs.register::<InBackpack>();
     ecs.register::<InflictsDamage>();
     ecs.register::<Item>();
@@ -26,6 +27,7 @@ pub fn component_registration(ecs: &mut World) {
     ecs.register::<ParticleLifetime>();
     ecs.register::<Player>();
     ecs.register::<Position>();
+    ecs.register::<ProvidesFood>();
     ecs.register::<ProvidesHealing>();
     ecs.register::<Ranged>();
     ecs.register::<Renderable>();
@@ -86,6 +88,20 @@ pub struct Equipped {
     pub slot: EquipmentSlot,
 }
 
+#[derive(Serialize, Deserialize, Copy, Clone, PartialEq)]
+pub enum HungerState {
+    WellFed,
+    Normal,
+    Hungry,
+    Starving,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct HungerClock {
+    pub state: HungerState,
+    pub duration: i32,
+}
+
 #[derive(Component, Debug, ConvertSaveload)]
 pub struct InBackpack {
     pub owner: Entity,
@@ -114,7 +130,7 @@ pub struct Name {
 
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct ParticleLifetime {
-    pub lifetime_ms: f32
+    pub lifetime_ms: f32,
 }
 
 #[derive(Component, Serialize, Deserialize, Clone)]
@@ -125,6 +141,9 @@ pub struct Position {
     pub x: i32,
     pub y: i32,
 }
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct ProvidesFood {}
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct ProvidesHealing {

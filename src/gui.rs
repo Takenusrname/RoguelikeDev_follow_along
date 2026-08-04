@@ -44,7 +44,8 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
 
     let combat_stats = ecs.read_storage::<CombatStats>();
     let players = ecs.read_storage::<Player>();
-    for (_player, stats) in (&players, &combat_stats).join() {
+    let hunger = ecs.read_storage::<HungerClock>();
+    for (_player, stats, hc) in (&players, &combat_stats, &hunger).join() {
         let health = format!("HP: {} / {} ", stats.hp, stats.max_hp);
         ctx.print_color(
             12,
@@ -62,6 +63,33 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
             RGB::named(HP_FG),
             RGB::named(DEFAULT_BG),
         );
+
+        match hc.state {
+            HungerState::WellFed => ctx.print_color(
+                71,
+                42,
+                RGB::named(WF_FG),
+                RGB::named(DEFAULT_BG),
+                "Well Fed",
+            ),
+            HungerState::Normal => {
+                ctx.print_color(71, 42, RGB::named(FED_FG), RGB::named(DEFAULT_BG), "Fed")
+            }
+            HungerState::Hungry => ctx.print_color(
+                71,
+                42,
+                RGB::named(HUNGRY_FG),
+                RGB::named(DEFAULT_BG),
+                "Hungry",
+            ),
+            HungerState::Starving => ctx.print_color(
+                71,
+                42,
+                RGB::named(STARVE_FG),
+                RGB::named(DEFAULT_BG),
+                "Starving",
+            ),
+        }
     }
 
     let map = ecs.fetch::<Map>();

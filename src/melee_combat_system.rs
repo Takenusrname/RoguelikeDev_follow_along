@@ -1,6 +1,6 @@
 use super::{
-    CombatStats, DefenseBonus, Equipped, MeleePowerBonus, Name, Position, SufferDamage,
-    WantsToMelee, colors::*, gamelog::GameLog, particle_system::ParticleBuilder,
+    CombatStats, DefenseBonus, Equipped, HungerClock, HungerState, MeleePowerBonus, Name, Position,
+    SufferDamage, WantsToMelee, colors::*, gamelog::GameLog, particle_system::ParticleBuilder,
 };
 use bracket_lib::{color::RGB, terminal::to_cp437};
 use specs::prelude::*;
@@ -14,6 +14,7 @@ impl<'a> System<'a> for MeleeCombatSystem {
         ReadStorage<'a, Equipped>,
         Entities<'a>,
         WriteExpect<'a, GameLog>,
+        ReadStorage<'a, HungerClock>,
         ReadStorage<'a, MeleePowerBonus>,
         ReadStorage<'a, Name>,
         WriteExpect<'a, ParticleBuilder>,
@@ -29,6 +30,7 @@ impl<'a> System<'a> for MeleeCombatSystem {
             equipped,
             entities,
             mut log,
+            hunger_clock,
             melee_power_bonus,
             names,
             mut particle_builder,
@@ -49,6 +51,14 @@ impl<'a> System<'a> for MeleeCombatSystem {
                         offenseive_bonus += power_bonus.power;
                     }
                 }
+
+                let hc = hunger_clock.get(entity);
+                if let Some(hc) = hc {
+                    if hc.state == HungerState::WellFed {
+                        offenseive_bonus += 1;
+                    }
+                }
+
                 let target_stats = combat_stats.get(wants_melee.target).unwrap();
                 if target_stats.hp > 0 {
                     let target_name = names.get(wants_melee.target).unwrap();
