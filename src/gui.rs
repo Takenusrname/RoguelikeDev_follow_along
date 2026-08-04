@@ -483,9 +483,9 @@ pub fn main_menu(gs: &mut State, ctx: &mut BTerm) -> MainMenuResult {
 }
 
 pub fn game_over(ctx: &mut BTerm) -> GameOverResult {
-    ctx.cls_bg(RGB::named(DEFAULT_BG));
+    //ctx.cls_bg(RGB::named(DEFAULT_BG));
     let line1 = "You DIED!";
-    let line2 = "You Failed to finish your Quest.";
+    let line2 = "You Failed to collect the McGuffin!.";
     let line3 = "Press any key to return to the Menu";
     ctx.print_color_centered(15, RGB::named(DEATH_FG), RGB::named(DEFAULT_BG), line1);
     ctx.print_color_centered(17, RGB::named(DEFAULT_FG), RGB::named(DEFAULT_BG), line2);

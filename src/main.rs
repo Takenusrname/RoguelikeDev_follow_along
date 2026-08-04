@@ -81,6 +81,7 @@ impl GameState for State {
 
         match newrunstate {
             RunState::MainMenu { .. } => {}
+            RunState::GameOver { .. } => {}
             _ => {
                 render_world(&mut self.ecs, ctx);
             }
@@ -218,6 +219,8 @@ impl State {
         for del in to_delete.iter() {
             self.ecs.delete_entity(*del).expect("Deletion failed");
         }
+
+        saveload_system::delete_save();
 
         let mut builder = map_builders::random_builder(1);
         let player_start;
