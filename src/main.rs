@@ -33,6 +33,7 @@ mod rect;
 pub use rect::Rect;
 mod render;
 use render::render_world;
+mod rex_assets;
 pub mod saveload_system;
 mod spawner;
 mod statemachine;
@@ -248,16 +249,16 @@ impl State {
     }
 }
 
-embedded_resource!(FONT_FILE, "../resources/cp437_16x16_mod.png");
+embedded_resource!(FONT_L, "../resources/cp437_16x16_mod.png");
 
 fn main() -> BError {
     use bracket_lib::terminal::BTermBuilder;
 
-    link_resource!(FONT_FILE, "resources/cp437_16x16_mod.png");
+    link_resource!(FONT_L, "resources/cp437_16x16_mod.png");
 
     let mut ctx = BTermBuilder::simple(80, 50)
         .unwrap()
-        .with_title("mq")
+        .with_title("McGuffin Quest")
         .with_font("cp437_16x16_mod.png", 16, 16)
         .with_tile_dimensions(16, 16)
         .build()?;
@@ -299,6 +300,7 @@ fn main() -> BError {
     });
 
     gs.ecs.insert(particle_system::ParticleBuilder::new());
+    gs.ecs.insert(rex_assets::RexAssets::new());
 
     main_loop(ctx, gs)
 }

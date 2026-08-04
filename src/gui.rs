@@ -1,4 +1,7 @@
-use super::{Map, RunState, State, Viewshed, colors::*, components::*, gamelog::GameLog};
+use super::{
+    Map, RunState, State, Viewshed, colors::*, components::*, gamelog::GameLog,
+    rex_assets::RexAssets,
+};
 use bracket_lib::{
     color::RGB,
     geometry::{Point, Rect},
@@ -373,8 +376,10 @@ pub fn ranged_target(
 pub fn main_menu(gs: &mut State, ctx: &mut BTerm) -> MainMenuResult {
     let save_exists = super::saveload_system::does_save_exist();
     let runstate = gs.ecs.fetch::<RunState>();
+    let assets = gs.ecs.fetch::<RexAssets>();
+    ctx.render_xp_sprite(&assets.menu, 0, 0);
 
-    let title_txt = "TODO: THINK OF TITLE";
+    //let title_txt = "TODO: THINK OF TITLE";
     let new_game_txt = "Begin New Game";
     let load_game_txt = "Load Game";
     let quit_txt = "Quit";
@@ -382,28 +387,44 @@ pub fn main_menu(gs: &mut State, ctx: &mut BTerm) -> MainMenuResult {
     let sel_fg = RGB::named(SEL_FG);
     let bg = RGB::named(DEFAULT_BG);
 
-    ctx.print_color_centered(15, RGB::named(TITLE_FG), RGB::named(DEFAULT_BG), title_txt);
+    //ctx.print_color_centered(15, RGB::named(TITLE_FG), RGB::named(DEFAULT_BG), title_txt);
+
+    let x: i32 = 5;
+    let mut y = 23;
+    ctx.draw_box_double(
+        x - 3,
+        y - 2,
+        27,
+        11,
+        RGB::named(TITLE_FG),
+        RGB::named(DEFAULT_BG),
+    );
+    ctx.print_color(x - 1, y, sel_fg, bg, "Use ▲/▼ arrows and Enter");
+    ctx.print_color(x - 1, y + 1, sel_fg, bg, "to make selection.");
 
     if let RunState::MainMenu {
         menu_sel: selection,
     } = *runstate
     {
+        y += 3;
         if selection == MainMenuSelection::NewGame {
-            ctx.print_color_centered(24, sel_fg, bg, new_game_txt);
+            ctx.print_color(x, y, sel_fg, bg, new_game_txt);
         } else {
-            ctx.print_color_centered(24, non_sel_fg, bg, new_game_txt);
+            ctx.print_color(x, y, non_sel_fg, bg, new_game_txt);
         }
+        y += 1;
         if save_exists {
             if selection == MainMenuSelection::LoadGame {
-                ctx.print_color_centered(25, sel_fg, bg, load_game_txt);
+                ctx.print_color(x, y, sel_fg, bg, load_game_txt);
             } else {
-                ctx.print_color_centered(25, non_sel_fg, bg, load_game_txt);
+                ctx.print_color(x, y, non_sel_fg, bg, load_game_txt);
             }
+            y += 1;
         }
         if selection == MainMenuSelection::Quit {
-            ctx.print_color_centered(26, sel_fg, bg, quit_txt);
+            ctx.print_color(x, y, sel_fg, bg, quit_txt);
         } else {
-            ctx.print_color_centered(26, non_sel_fg, bg, quit_txt);
+            ctx.print_color(x, y, non_sel_fg, bg, quit_txt);
         }
 
         match ctx.key {
