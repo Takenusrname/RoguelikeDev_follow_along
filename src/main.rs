@@ -19,6 +19,7 @@ mod inventory_system;
 use inventory_system::{ItemCollectionSystem, ItemDropSystem, ItemRemoveSystem, ItemUseSystem};
 pub mod map;
 use map::*;
+pub mod map_builders;
 pub mod map_indexing_system;
 use map_indexing_system::MapIndexingSystem;
 mod melee_combat_system;
@@ -166,20 +167,21 @@ impl State {
                 .expect("Unable to delete entity");
         }
 
-        let worldmap;
-        let current_depth: i32;
+        let mut builder;
+        let current_depth;
+        let player_start;
         {
             let mut worldmap_res = self.ecs.write_resource::<Map>();
             current_depth = worldmap_res.depth;
-            *worldmap_res = Map::new_map_rooms_and_corridors(current_depth + 1);
-            worldmap = worldmap_res.clone();
+            builder = map_builders::random_builder(current_depth + 1);
+            builder.build_map();
+            *worldmap_res = builder.get_map();
+            player_start = builder.get_starting_pos();
         }
 
-        for room in worldmap.rooms.iter().skip(1) {
-            spawner::spawn_room(&mut self.ecs, room, current_depth + 1);
-        }
+        builder.spawn_entities(&mut self.ecs);
 
-        let (player_x, player_y) = worldmap.rooms[0].center();
+        let (player_x, player_y) = (player_start.x, player_start.y);
         let mut player_pos = self.ecs.write_resource::<Point>();
         *player_pos = Point::new(player_x, player_y);
         let mut position_components = self.ecs.write_storage::<Position>();
@@ -217,18 +219,18 @@ impl State {
             self.ecs.delete_entity(*del).expect("Deletion failed");
         }
 
-        let worldmap;
+        let mut builder = map_builders::random_builder(1);
+        let player_start;
         {
-            let mut worldmap_resource = self.ecs.write_resource::<Map>();
-            *worldmap_resource = Map::new_map_rooms_and_corridors(1);
-            worldmap = worldmap_resource.clone();
+            let mut worldmap_res = self.ecs.write_resource::<Map>();
+            builder.build_map();
+            player_start = builder.get_starting_pos();
+            *worldmap_res = builder.get_map();
         }
 
-        for room in worldmap.rooms.iter().skip(1) {
-            spawner::spawn_room(&mut self.ecs, room, 1);
-        }
+        builder.spawn_entities(&mut self.ecs);
 
-        let (player_x, player_y) = worldmap.rooms[0].center();
+        let (player_x, player_y) = (player_start.x, player_start.y);
         let player_entity = spawner::player(&mut self.ecs, player_x, player_y);
         let mut player_pos = self.ecs.write_resource::<Point>();
 
@@ -274,17 +276,21 @@ fn main() -> BError {
     component_registration(&mut gs.ecs);
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
+
     let save = saveload_system::does_save_exist();
-    let map = Map::new_map_rooms_and_corridors(1);
-    let (player_x, player_y) = map.rooms[0].center();
+    
+    let mut builder = map_builders::random_builder(1);
+    builder.build_map();
+    let player_start = builder.get_starting_pos();
+    let map = builder.get_map();
+    
+    let (player_x, player_y) = (player_start.x, player_start.y);
 
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
     gs.ecs.insert(RandomNumberGenerator::new());
 
-    for room in map.rooms.iter().skip(1) {
-        spawner::spawn_room(&mut gs.ecs, room, 1);
-    }
+    builder.spawn_entities(&mut gs.ecs);
 
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
