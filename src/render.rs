@@ -4,7 +4,8 @@ use specs::prelude::*;
 use super::{Hidden, Map, Position, Renderable, draw_map, gui};
 
 pub fn render_world(ecs: &mut World, ctx: &mut BTerm) {
-    draw_map(&ecs, ctx);
+    let map = ecs.fetch::<Map>();
+    draw_map(&map, ctx);
 
     {
         let positions = ecs.read_storage::<Position>();

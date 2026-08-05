@@ -1,5 +1,6 @@
 use super::{
-    MAPHEIGHT, MAPWIDTH, Map, RunState, State, components::*, gui, player_input, saveload_system,
+    MAPHEIGHT, MAPWIDTH, Map, RunState, SHOW_MAPGEN_VISUALIZER, State, components::*, draw_map,
+    gui, player_input, saveload_system,
 };
 use bracket_lib::terminal::BTerm;
 use specs::prelude::*;
@@ -180,6 +181,22 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 newrunstate = RunState::MonsterTurn;
             } else {
                 newrunstate = RunState::MagicMapReveal { row: row + 1 }
+            }
+        }
+        RunState::MapGeneration => {
+            if !SHOW_MAPGEN_VISUALIZER {
+                newrunstate = gs.mapgen_next_state.unwrap();
+            }
+            ctx.cls();
+            draw_map(&gs.mapgen_history[gs.mapgen_index], ctx);
+
+            gs.mapgen_timer += ctx.frame_time_ms;
+            if gs.mapgen_timer > 300.0 {
+                gs.mapgen_timer = 0.0;
+                gs.mapgen_index += 1;
+                if gs.mapgen_index >= gs.mapgen_history.len() {
+                    newrunstate = gs.mapgen_next_state.unwrap();
+                }
             }
         }
     }

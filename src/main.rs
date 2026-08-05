@@ -43,6 +43,8 @@ mod trigger_system;
 mod visibility_system;
 use visibility_system::VisibilitySystem;
 
+const SHOW_MAPGEN_VISUALIZER: bool = true;
+
 /// RUNSTATES
 ///
 /// PRERUN -> MAINMENU -> CHARGEN -> MAPGEN -> AwaitingInput -> PlayerTurn <-> MonsterTurn
@@ -61,10 +63,15 @@ pub enum RunState {
     ShowRemoveItem,
     GameOver,
     MagicMapReveal { row: i32 },
+    MapGeneration,
 }
 
 struct State {
     pub ecs: World,
+    mapgen_next_state: Option<RunState>,
+    mapgen_history: Vec<Map>,
+    mapgen_index: usize,
+    mapgen_timer: f32,
 }
 
 impl GameState for State {
@@ -99,7 +106,7 @@ impl State {
         vis.run_now(&self.ecs);
         let mut mob = MonsterAI {};
         mob.run_now(&self.ecs);
-        let mut triggers = trigger_system::TriggerSystem{};
+        let mut triggers = trigger_system::TriggerSystem {};
         triggers.run_now(&self.ecs);
         let mut mapindex = MapIndexingSystem {};
         mapindex.run_now(&self.ecs);
@@ -168,41 +175,21 @@ impl State {
                 .expect("Unable to delete entity");
         }
 
-        let mut builder;
         let current_depth;
-        let player_start;
         {
-            let mut worldmap_res = self.ecs.write_resource::<Map>();
+            let worldmap_res = self.ecs.write_resource::<Map>();
             current_depth = worldmap_res.depth;
-            builder = map_builders::random_builder(current_depth + 1);
-            builder.build_map();
-            *worldmap_res = builder.get_map();
-            player_start = builder.get_starting_pos();
         }
 
-        builder.spawn_entities(&mut self.ecs);
+        self.generate_world_map(current_depth + 1);
 
-        let (player_x, player_y) = (player_start.x, player_start.y);
-        let mut player_pos = self.ecs.write_resource::<Point>();
-        *player_pos = Point::new(player_x, player_y);
-        let mut position_components = self.ecs.write_storage::<Position>();
         let player_entity = self.ecs.fetch::<Entity>();
-        let player_pos_comp = position_components.get_mut(*player_entity);
-        if let Some(player_pos_comp) = player_pos_comp {
-            player_pos_comp.x = player_x;
-            player_pos_comp.y = player_y;
-        }
-
-        let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
-        let vs = viewshed_components.get_mut(*player_entity);
-        if let Some(vs) = vs {
-            vs.dirty = true;
-        }
 
         let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
         gamelog
             .entries
             .push("You descend to the next level, and take a moment to heal.".to_string());
+
         let mut player_health_store = self.ecs.write_storage::<CombatStats>();
         let player_health = player_health_store.get_mut(*player_entity);
         if let Some(player_health) = player_health {
@@ -222,35 +209,46 @@ impl State {
 
         saveload_system::delete_save();
 
-        let mut builder = map_builders::random_builder(1);
+        {
+            let player_entity = spawner::player(&mut self.ecs, 0, 0);
+            let mut player_entity_writer = self.ecs.write_resource::<Entity>();
+            *player_entity_writer = player_entity;
+        }
+
+        self.generate_world_map(1);
+    }
+
+    fn generate_world_map(&mut self, new_depth: i32) {
+        self.mapgen_index = 0;
+        self.mapgen_timer = 0.0;
+        self.mapgen_history.clear();
+        let mut builder = map_builders::random_builder(new_depth);
+        builder.build_map();
+        self.mapgen_history = builder.get_snapshot_history();
+
         let player_start;
         {
             let mut worldmap_res = self.ecs.write_resource::<Map>();
-            builder.build_map();
-            player_start = builder.get_starting_pos();
             *worldmap_res = builder.get_map();
+            player_start = builder.get_starting_pos();
         }
 
         builder.spawn_entities(&mut self.ecs);
 
         let (player_x, player_y) = (player_start.x, player_start.y);
-        let player_entity = spawner::player(&mut self.ecs, player_x, player_y);
         let mut player_pos = self.ecs.write_resource::<Point>();
-
         *player_pos = Point::new(player_x, player_y);
 
         let mut position_comps = self.ecs.write_storage::<Position>();
-        let mut player_entity_writer = self.ecs.write_resource::<Entity>();
-        *player_entity_writer = player_entity;
-
-        let player_pos_comp = position_comps.get_mut(player_entity);
+        let player_entity = self.ecs.fetch::<Entity>();
+        let player_pos_comp = position_comps.get_mut(*player_entity);
         if let Some(player_pos_comp) = player_pos_comp {
             player_pos_comp.x = player_x;
             player_pos_comp.y = player_y;
         }
 
-        let mut viewshed_comp = self.ecs.write_storage::<Viewshed>();
-        let vs = viewshed_comp.get_mut(player_entity);
+        let mut viewshed_comps = self.ecs.write_storage::<Viewshed>();
+        let vs = viewshed_comps.get_mut(*player_entity);
         if let Some(vs) = vs {
             vs.dirty = true;
         }
@@ -274,30 +272,30 @@ fn main() -> BError {
     ctx.set_active_font(1, false);
     ctx.with_mouse_visibility(false);
     ctx.with_post_scanlines(false);
-    let mut gs = State { ecs: World::new() };
+    let mut gs = State {
+        ecs: World::new(),
+        mapgen_next_state: Some(RunState::MainMenu {
+            menu_sel: gui::MainMenuSelection::NewGame,
+        }),
+        mapgen_index: 0,
+        mapgen_history: Vec::new(),
+        mapgen_timer: 0.0,
+    };
 
     component_registration(&mut gs.ecs);
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
-    let save = saveload_system::does_save_exist();
-    
-    let mut builder = map_builders::random_builder(1);
-    builder.build_map();
-    let player_start = builder.get_starting_pos();
-    let map = builder.get_map();
-    
-    let (player_x, player_y) = (player_start.x, player_start.y);
-
-    let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
-
+    gs.ecs.insert(Map::new(1));
+    gs.ecs.insert(Point::new(0, 0));
     gs.ecs.insert(RandomNumberGenerator::new());
 
-    builder.spawn_entities(&mut gs.ecs);
+    //let save = saveload_system::does_save_exist();
 
-    gs.ecs.insert(map);
-    gs.ecs.insert(Point::new(player_x, player_y));
+    let player_entity = spawner::player(&mut gs.ecs, 0, 0);
     gs.ecs.insert(player_entity);
+
+    /*
     if save {
         gs.ecs.insert(RunState::MainMenu {
             menu_sel: gui::MainMenuSelection::LoadGame,
@@ -306,13 +304,16 @@ fn main() -> BError {
         gs.ecs.insert(RunState::MainMenu {
             menu_sel: gui::MainMenuSelection::NewGame,
         });
-    }
+    }*/
+    gs.ecs.insert(RunState::MapGeneration{});
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to MQ".to_string()],
     });
 
     gs.ecs.insert(particle_system::ParticleBuilder::new());
     gs.ecs.insert(rex_assets::RexAssets::new());
+
+    gs.generate_world_map(1);
 
     main_loop(ctx, gs)
 }
