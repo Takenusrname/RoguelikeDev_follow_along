@@ -133,7 +133,11 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 }
 
                 gui::MainMenuResult::Selected { selected } => match selected {
-                    gui::MainMenuSelection::NewGame => newrunstate = RunState::PreRun,
+                    gui::MainMenuSelection::NewGame => {
+                        gs.game_over_cleanup();
+                        //gs.generate_world_map(1);
+                        newrunstate = RunState::MapGeneration
+                    }
                     gui::MainMenuSelection::LoadGame => {
                         saveload_system::load_game(&mut gs.ecs);
                         newrunstate = RunState::AwaitingInput;
@@ -168,7 +172,8 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
 
         RunState::NextLevel => {
             gs.goto_next_level();
-            newrunstate = RunState::PreRun;
+            gs.mapgen_next_state = Some(RunState::PreRun);
+            newrunstate = RunState::MapGeneration;
         }
 
         RunState::MagicMapReveal { row } => {

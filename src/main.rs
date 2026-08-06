@@ -206,7 +206,6 @@ impl State {
         for del in to_delete.iter() {
             self.ecs.delete_entity(*del).expect("Deletion failed");
         }
-
         saveload_system::delete_save();
 
         {
@@ -274,9 +273,7 @@ fn main() -> BError {
     ctx.with_post_scanlines(false);
     let mut gs = State {
         ecs: World::new(),
-        mapgen_next_state: Some(RunState::MainMenu {
-            menu_sel: gui::MainMenuSelection::NewGame,
-        }),
+        mapgen_next_state: Some(RunState::PreRun),
         mapgen_index: 0,
         mapgen_history: Vec::new(),
         mapgen_timer: 0.0,
@@ -304,7 +301,8 @@ fn main() -> BError {
         gs.ecs.insert(RunState::MainMenu {
             menu_sel: gui::MainMenuSelection::NewGame,
         });
-    }*/
+    }// */
+
     gs.ecs.insert(RunState::MapGeneration{});
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to MQ".to_string()],

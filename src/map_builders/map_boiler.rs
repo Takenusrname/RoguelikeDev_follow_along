@@ -1,6 +1,6 @@
 use super::MapBuilder;
 use crate::{Map, Position, Rect, SHOW_MAPGEN_VISUALIZER, spawner};
-use specs::prelue::*;
+use specs::prelude::*;
 
 pub struct MapBoiler {
     map: Map,
@@ -24,7 +24,7 @@ impl MapBuilder for MapBoiler {
     }
 
     fn build_map(&mut self) {
-        self.build()
+        self.build();
     }
 
     fn spawn_entities(&mut self, ecs: &mut World) {
@@ -55,5 +55,5 @@ impl MapBoiler {
         }
     }
 
-    pub fn build() {}
+    pub fn build(&mut self) {}
 }
