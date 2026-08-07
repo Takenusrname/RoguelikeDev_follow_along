@@ -254,21 +254,27 @@ impl State {
     }
 }
 
+embedded_resource!(FONT_S, "../resources/cp437_8x8_mod.png");
+embedded_resource!(FONT_M, "../resources/cp437_12x12_mod.png");
 embedded_resource!(FONT_L, "../resources/cp437_16x16_mod.png");
 
 fn main() -> BError {
     use bracket_lib::terminal::BTermBuilder;
 
+    link_resource!(FONT_S, "resources/cp437_8x8_mod.png");
+    link_resource!(FONT_M, "resources/cp437_12x12_mod.png");
     link_resource!(FONT_L, "resources/cp437_16x16_mod.png");
 
     let mut ctx = BTermBuilder::simple(80, 50)
         .unwrap()
         .with_title("McGuffin Quest")
+        .with_font("cp437_8x8_mod.png", 8, 8)
+        .with_font("cp437_12x12_mod.png", 12, 12)
         .with_font("cp437_16x16_mod.png", 16, 16)
-        .with_tile_dimensions(16, 16)
+        .with_tile_dimensions(12,12)
         .build()?;
 
-    ctx.set_active_font(1, false);
+    ctx.set_active_font(2, false);
     ctx.with_mouse_visibility(false);
     ctx.with_post_scanlines(false);
     let mut gs = State {
