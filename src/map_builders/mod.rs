@@ -8,6 +8,8 @@ use bsp_interior::BspInteriorBuilder;
 mod cellular_automata;
 use cellular_automata::CellularAutomataBuilder;
 mod common;
+mod dla;
+use dla::DLABuilder;
 mod drunkards;
 use drunkards::DrunkardsWalkBuilder;
 mod maze;
@@ -26,8 +28,8 @@ pub trait MapBuilder {
 }
 
 pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
-    //Box::new(MazeBuilder::new(new_depth))
-    //*
+    Box::new(DLABuilder::new(new_depth))
+    /*
     let mut rng = bracket_lib::random::RandomNumberGenerator::new();
     let builder = rng.roll_dice(1, 8);
 

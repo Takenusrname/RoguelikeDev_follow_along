@@ -271,10 +271,10 @@ fn main() -> BError {
         .with_font("cp437_8x8_mod.png", 8, 8)
         .with_font("cp437_12x12_mod.png", 12, 12)
         .with_font("cp437_16x16_mod.png", 16, 16)
-        .with_tile_dimensions(12,12)
+        .with_tile_dimensions(8, 8)
         .build()?;
 
-    ctx.set_active_font(2, false);
+    ctx.set_active_font(1, false);
     ctx.with_mouse_visibility(false);
     ctx.with_post_scanlines(false);
     let mut gs = State {
