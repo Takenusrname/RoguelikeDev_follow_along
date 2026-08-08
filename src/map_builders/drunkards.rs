@@ -5,7 +5,7 @@ use super::{
     common::{generate_voronoi_spawn_regions, remove_unreachable_areas_returning_most_distant},
 };
 use crate::{Map, Position, SHOW_MAPGEN_VISUALIZER, TileType, spawner};
-use bracket_lib::{random::RandomNumberGenerator, terminal::console};
+use bracket_lib::random::RandomNumberGenerator;
 use specs::prelude::*;
 
 #[derive(PartialEq, Clone, Copy)]
@@ -120,7 +120,6 @@ impl DrunkardsWalkBuilder {
             },
         }
     }
-    
 
     pub fn build(&mut self) {
         let mut rng = RandomNumberGenerator::new();
@@ -142,7 +141,6 @@ impl DrunkardsWalkBuilder {
             .filter(|a| **a == TileType::Floor)
             .count();
         let mut digger_count = 0;
-        let mut active_digger_count = 0;
 
         while floor_tile_count < desired_floor_tiles {
             let mut did_something = false;
@@ -200,7 +198,6 @@ impl DrunkardsWalkBuilder {
             }
             if did_something {
                 self.take_snapshot();
-                active_digger_count += 1;
             }
             digger_count += 1;
             for t in self.map.tiles.iter_mut() {
@@ -215,10 +212,6 @@ impl DrunkardsWalkBuilder {
                 .filter(|a| **a == TileType::Floor)
                 .count();
         }
-        console::log(format!(
-            "{} dwarves gave up their sobriety, of whom {} actually found a wall.",
-            digger_count, active_digger_count
-        ));
 
         let exit_tile = remove_unreachable_areas_returning_most_distant(&mut self.map, start_idx);
         self.take_snapshot();

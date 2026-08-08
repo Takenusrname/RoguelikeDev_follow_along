@@ -1,5 +1,11 @@
-use super::MapBuilder;
-use crate::{Map, Position, Rect, SHOW_MAPGEN_VISUALIZER, spawner};
+use std::collections::HashMap;
+
+use super::{
+    MapBuilder,
+    common::{generate_voronoi_spawn_regions, remove_unreachable_areas_returning_most_distant},
+};
+use crate::{Map, Position, Rect, SHOW_MAPGEN_VISUALIZER, map::TileType, spawner};
+use bracket_lib::random::RandomNumberGenerator;
 use specs::prelude::*;
 
 pub struct MapBoiler {

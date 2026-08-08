@@ -1,15 +1,17 @@
 use crate::{Map, Position};
 use specs::prelude::*;
 
-mod cellular_automata;
-use cellular_automata::CellularAutomataBuilder;
-mod drunkards;
-use drunkards::DrunkardsWalkBuilder;
 mod bsp_dungeon;
 use bsp_dungeon::BspDungeonBuilder;
 mod bsp_interior;
 use bsp_interior::BspInteriorBuilder;
+mod cellular_automata;
+use cellular_automata::CellularAutomataBuilder;
 mod common;
+mod drunkards;
+use drunkards::DrunkardsWalkBuilder;
+mod maze;
+use maze::MazeBuilder;
 //use common::*;
 mod simple_map;
 use simple_map::SimpleMapBuilder;
@@ -24,10 +26,10 @@ pub trait MapBuilder {
 }
 
 pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
-    //Box::new(DrunkardsWalkBuilder::new(new_depth,DrunkardSettings { spawn_mode: DrunkSpawnMode::Random, drunken_lifetime: 100, floor_percent: 0.4 }))
+    //Box::new(MazeBuilder::new(new_depth))
     //*
     let mut rng = bracket_lib::random::RandomNumberGenerator::new();
-    let builder = rng.roll_dice(1, 7);
+    let builder = rng.roll_dice(1, 8);
 
     match builder {
         1 => Box::new(BspDungeonBuilder::new(new_depth)),
@@ -36,6 +38,7 @@ pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
         4 => Box::new(DrunkardsWalkBuilder::open_area(new_depth)),
         5 => Box::new(DrunkardsWalkBuilder::open_halls(new_depth)),
         6 => Box::new(DrunkardsWalkBuilder::winding_passages(new_depth)),
+        7 => Box::new(MazeBuilder::new(new_depth)),
         _ => Box::new(SimpleMapBuilder::new(new_depth)),
     } // */
 }
