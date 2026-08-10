@@ -34,7 +34,7 @@ impl MapBuilder for MazeBuilder {
     }
 
     fn spawn_entities(&mut self, ecs: &mut World) {
-        for area in self.noise_areas.iter().skip(1) {
+        for area in self.noise_areas.iter() {
             spawner::spawn_region(ecs, area.1, self.depth);
         }
     }
