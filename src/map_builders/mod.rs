@@ -17,6 +17,8 @@ use maze::MazeBuilder;
 //use common::*;
 mod simple_map;
 use simple_map::SimpleMapBuilder;
+mod voronoi;
+use voronoi::VoronoiCellBuilder;
 
 pub trait MapBuilder {
     fn build_map(&mut self);
@@ -28,10 +30,10 @@ pub trait MapBuilder {
 }
 
 pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
-    //Box::new(DrunkardsWalkBuilder::fearful_symmetry(new_depth))
+    //Box::new(VoronoiCellBuilder::new(new_depth))
     //*
     let mut rng = bracket_lib::random::RandomNumberGenerator::new();
-    let builder = rng.roll_dice(1, 14);
+    let builder = rng.roll_dice(1, 17);
 
     match builder {
         1 => Box::new(BspDungeonBuilder::new(new_depth)),
@@ -47,6 +49,9 @@ pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
         11 => Box::new(DLABuilder::walk_outwards(new_depth)),
         12 => Box::new(DLABuilder::central_attractor(new_depth)),
         13 => Box::new(DLABuilder::insectoid(new_depth)),
+        14 => Box::new(VoronoiCellBuilder::pythagoras(new_depth)),
+        15 => Box::new(VoronoiCellBuilder::manhattan(new_depth)),
+        16 => Box::new(VoronoiCellBuilder::chebyshev(new_depth)),
         _ => Box::new(SimpleMapBuilder::new(new_depth)),
     } // */
 }
