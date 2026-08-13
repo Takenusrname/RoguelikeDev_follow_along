@@ -175,7 +175,11 @@ impl VoronoiCellBuilder {
             x: self.map.width / 2,
             y: self.map.height / 2,
         };
-        let start_idx = self.map.xy_idx(self.starting_pos.x, self.starting_pos.y);
+        let mut start_idx = self.map.xy_idx(self.starting_pos.x, self.starting_pos.y);
+        while self.map.tiles[start_idx] != TileType::Floor {
+            self.starting_pos.x -= 1;
+            start_idx = self.map.xy_idx(self.starting_pos.x, self.starting_pos.y);
+        }
         self.take_snapshot();
 
         let exit_tile = remove_unreachable_areas_returning_most_distant(&mut self.map, start_idx);

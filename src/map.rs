@@ -8,15 +8,13 @@ use bracket_lib::{
 };
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
-use std::{
-    collections::HashSet,
-};
+use std::collections::HashSet;
 
 pub const MAPWIDTH: usize = 80;
 pub const MAPHEIGHT: usize = 43;
 pub const MAPCOUNT: usize = MAPHEIGHT * MAPWIDTH;
 
-#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Copy, Eq, Hash, Clone, Serialize, Deserialize)]
 pub enum TileType {
     Wall,
     Floor,
