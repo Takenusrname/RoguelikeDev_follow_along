@@ -1,7 +1,6 @@
 use super::{MapBuilder, common::*};
 use crate::{Map, Position, Rect, SHOW_MAPGEN_VISUALIZER, TileType, spawner};
 use bracket_lib::random::RandomNumberGenerator;
-use specs::prelude::*;
 
 pub struct SimpleMapBuilder {
     map: Map,
@@ -9,6 +8,7 @@ pub struct SimpleMapBuilder {
     depth: i32,
     rooms: Vec<Rect>,
     history: Vec<Map>,
+    spawn_list: Vec<(usize, String)>
 }
 
 impl MapBuilder for SimpleMapBuilder {
@@ -24,10 +24,8 @@ impl MapBuilder for SimpleMapBuilder {
         self.build();
     }
 
-    fn spawn_entities(&mut self, ecs: &mut World) {
-        for room in self.rooms.iter().skip(1) {
-            spawner::spawn_room(ecs, room, self.depth);
-        }
+    fn get_spawn_list(&self) -> &Vec<(usize, String)> {
+        &self.spawn_list
     }
 
     fn get_snapshot_history(&self) -> Vec<Map> {
@@ -53,6 +51,7 @@ impl SimpleMapBuilder {
             depth: new_depth,
             rooms: Vec::new(),
             history: Vec::new(),
+            spawn_list: Vec::new()
         }
     }
     fn build(&mut self) {
@@ -103,11 +102,16 @@ impl SimpleMapBuilder {
         let stairs_pos = self.rooms[self.rooms.len() - 1].center();
         let stairs_idx = self.map.xy_idx(stairs_pos.0, stairs_pos.1);
         self.map.tiles[stairs_idx] = TileType::DownStairs;
+        self.take_snapshot();
 
         let start_pos = self.rooms[0].center();
         self.starting_pos = Position {
             x: start_pos.0,
             y: start_pos.1,
         };
+
+        for room in self.rooms.iter().skip(1) {
+            spawner::spawn_room(&self.map, &mut rng, room, self.depth, &mut self.spawn_list);
+        }
     }
 }

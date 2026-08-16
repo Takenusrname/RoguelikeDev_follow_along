@@ -188,7 +188,7 @@ pub fn is_inbounds(map: &Map, x: i32, y: i32) -> bool {
     }
 }
 
-/// Checks if the tile is a wall and it's reviealed
+/// Checks if the tile is a wall and it's revealed
 fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
     let idx = map.xy_idx(x, y);
     map.tiles[idx] == TileType::Wall && map.revealed_tiles[idx]
@@ -196,7 +196,7 @@ fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
 
 /// Checks if the wall tile has other wall tiles if it does
 /// it grabs the glyph tied to the mask depending how many
-/// other wall are next to it.
+/// other walls are next to it.
 fn wall_glyph(map: &Map, x: i32, y: i32) -> FontCharType {
     /*
     8-bit mask values

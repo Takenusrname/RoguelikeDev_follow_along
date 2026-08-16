@@ -1,4 +1,4 @@
-use crate::{Map, Position};
+use crate::{Map, Position, spawner};
 use specs::prelude::*;
 
 mod bsp_dungeon;
@@ -14,7 +14,8 @@ mod drunkards;
 use drunkards::DrunkardsWalkBuilder;
 mod maze;
 use maze::MazeBuilder;
-//use common::*;
+mod prefab_builder;
+use prefab_builder::PrefabBuilder;
 mod simple_map;
 use simple_map::SimpleMapBuilder;
 mod voronoi;
@@ -24,19 +25,25 @@ use waveform_collapse::WaveformCollapseBuilder;
 
 pub trait MapBuilder {
     fn build_map(&mut self);
-    fn spawn_entities(&mut self, ecs: &mut World);
     fn get_map(&self) -> Map;
     fn get_starting_pos(&self) -> Position;
     fn get_snapshot_history(&self) -> Vec<Map>;
     fn take_snapshot(&mut self);
+    fn get_spawn_list(&self) -> &Vec<(usize, String)>;
+
+    fn spawn_entities(&mut self, ecs: &mut World) {
+        for entity in self.get_spawn_list().iter() {
+            spawner::spawn_entity(ecs, &(&entity.0, &entity.1));
+        }
+    }
 }
 
 pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
-    //Box::new(WaveformCollapseBuilder::test_map(new_depth))
-    //*
+    Box::new(PrefabBuilder::new(new_depth, Some(Box::new(CellularAutomataBuilder::new(new_depth)))))
+    /*
     let mut rng: bracket_lib::prelude::RandomNumberGenerator =
         bracket_lib::random::RandomNumberGenerator::new();
-    let builder = rng.roll_dice(1, 18);
+    let builder = rng.roll_dice(1, 17);
     let mut result: Box<dyn MapBuilder>;
 
     match builder {
@@ -88,9 +95,6 @@ pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
         16 => {
             result = Box::new(VoronoiCellBuilder::chebyshev(new_depth));
         }
-        17 => {
-            result = Box::new(WaveformCollapseBuilder::test_map(new_depth));
-        }
         _ => {
             result = Box::new(SimpleMapBuilder::new(new_depth));
         }
@@ -99,6 +103,5 @@ pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
     if rng.roll_dice(1, 3) == 1 {
         result = Box::new(WaveformCollapseBuilder::derive_map(new_depth, result));
     }
-    // */
-    result
+    result // */
 }

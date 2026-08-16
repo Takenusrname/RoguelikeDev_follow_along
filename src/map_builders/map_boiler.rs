@@ -14,6 +14,7 @@ pub struct MapBoiler {
     depth: i32,
     rooms: Vec<Rect>,
     history: Vec<Map>,
+    spawn_list: Vec<(usize, String)>,
 }
 
 impl MapBuilder for MapBoiler {
@@ -33,10 +34,8 @@ impl MapBuilder for MapBoiler {
         self.build();
     }
 
-    fn spawn_entities(&mut self, ecs: &mut World) {
-        for room in self.rooms.iter().skip(1) {
-            spawner::spawn_room(ecs, room, self.depth);
-        }
+    fn get_spawn_list(&self) -> &Vec<(usize, String)> {
+        &self.spawn_list
     }
 
     fn take_snapshot(&mut self) {
@@ -58,8 +57,40 @@ impl MapBoiler {
             depth: new_depth,
             rooms: Vec::new(),
             history: Vec::new(),
+            spawn_list: Vec::new(),
         }
     }
 
-    pub fn build(&mut self) {}
+    pub fn build(&mut self) {
+        let mut rng = RandomNumberGenerator::new();
+
+        self.starting_pos = Position {
+            x: self.map.width / 2,
+            y: self.map.height / 2,
+        };
+        let mut start_idx = self.map.xy_idx(self.starting_pos.x, self.starting_pos.y);
+        while self.map.tiles[start_idx] != TileType::Floor {
+            self.starting_pos.x -= 1;
+            start_idx = self.map.xy_idx(self.starting_pos.x, self.starting_pos.y);
+        }
+        self.take_snapshot();
+
+        let exit_tile = remove_unreachable_areas_returning_most_distant(&mut self.map, start_idx);
+        self.take_snapshot();
+
+        self.map.tiles[exit_tile] = TileType::DownStairs;
+        self.take_snapshot();
+
+        /*
+        // For non room based maps
+        self.noise_areas = generate_voronoi_spawn_regions(&self.map, &mut rng);
+        for area in self.noise_areas.iter() {
+            spawner::spawn_region(&self.map, &mut rng, area.1, self.depth, &mut self.spawn_list);
+        }
+
+        // for room based maps
+        for room in self.rooms.iter().skip(1) {
+            spawner::spawn_room(&self.map, &mut rng, room, self.depth, &mut self.spawn_list);
+        }*/
+    }
 }
