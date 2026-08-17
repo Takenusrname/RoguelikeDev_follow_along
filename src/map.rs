@@ -152,7 +152,7 @@ pub fn draw_map(map: &Map, ctx: &mut BTerm) {
                 TileType::DownStairs => {
                     glyph = to_cp437('»');
                     fg = RGB::named(STAIRS_FG);
-                    bg = RGB::named(DEFAULT_BG);
+                    bg = RGB::named(LIT_BG);
                 }
             }
             if map.bloodstains.contains(&idx) {

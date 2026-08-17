@@ -222,15 +222,21 @@ impl State {
         self.mapgen_index = 0;
         self.mapgen_timer = 0.0;
         self.mapgen_history.clear();
-        let mut builder = map_builders::random_builder(new_depth);
-        builder.build_map();
-        self.mapgen_history = builder.get_snapshot_history();
+
+        let mut rng = self.ecs.write_resource::<RandomNumberGenerator>();
+        
+        let mut builder = map_builders::random_builder(new_depth, &mut rng);
+        builder.build_map(&mut rng);
+        
+        std::mem::drop(rng);
+        
+        self.mapgen_history = builder.build_data.history.clone();
 
         let player_start;
         {
             let mut worldmap_res = self.ecs.write_resource::<Map>();
-            *worldmap_res = builder.get_map();
-            player_start = builder.get_starting_pos();
+            *worldmap_res = builder.build_data.map.clone();
+            player_start = builder.build_data.starting_pos.as_mut().unwrap().clone();
         }
 
         builder.spawn_entities(&mut self.ecs);
@@ -272,10 +278,10 @@ fn main() -> BError {
         .with_font("cp437_8x8_mod.png", 8, 8)
         .with_font("cp437_12x12_mod.png", 12, 12)
         .with_font("cp437_16x16_mod.png", 16, 16)
-        .with_tile_dimensions(8, 8)
+        .with_tile_dimensions(16, 16)
         .build()?;
 
-    ctx.set_active_font(1, false);
+    ctx.set_active_font(3, false); // 1 = 8x8 / 2 = 12x12 / 3 = 16x16
     ctx.with_mouse_visibility(false);
     ctx.with_post_scanlines(false);
     let mut gs = State {
