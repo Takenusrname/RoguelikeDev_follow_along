@@ -1,7 +1,6 @@
 use super::{MapBuilder, common::*};
 use crate::{Map, Position, Rect, SHOW_MAPGEN_VISUALIZER, TileType, spawner};
 use bracket_lib::random::RandomNumberGenerator;
-use specs::prelude::*;
 
 pub struct BspDungeonBuilder {
     map: Map,

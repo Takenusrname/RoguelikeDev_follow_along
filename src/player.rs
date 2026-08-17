@@ -187,6 +187,8 @@ pub fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
                 }
             }
 
+            VirtualKeyCode::F2 => return RunState::Screenshot,
+
             VirtualKeyCode::Numpad5 => return skip_turn(&mut gs.ecs),
             VirtualKeyCode::Space => return skip_turn(&mut gs.ecs),
 

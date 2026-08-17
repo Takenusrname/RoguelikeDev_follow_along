@@ -1,4 +1,5 @@
 use crate::{Map, Position, spawner};
+use bracket_lib::random::RandomNumberGenerator;
 use specs::prelude::*;
 
 mod bsp_dungeon;
@@ -39,11 +40,8 @@ pub trait MapBuilder {
 }
 
 pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
-    Box::new(PrefabBuilder::new(new_depth, Some(Box::new(CellularAutomataBuilder::new(new_depth)))))
-    /*
-    let mut rng: bracket_lib::prelude::RandomNumberGenerator =
-        bracket_lib::random::RandomNumberGenerator::new();
-    let builder = rng.roll_dice(1, 17);
+    let mut rng: RandomNumberGenerator = RandomNumberGenerator::new();
+    let builder = rng.roll_dice(1, 18);
     let mut result: Box<dyn MapBuilder>;
 
     match builder {
@@ -95,6 +93,12 @@ pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
         16 => {
             result = Box::new(VoronoiCellBuilder::chebyshev(new_depth));
         }
+        17 => {
+            result = Box::new(PrefabBuilder::constant(
+                new_depth,
+                prefab_builder::prefab_levels::WFC_POPULATED,
+            ))
+        }
         _ => {
             result = Box::new(SimpleMapBuilder::new(new_depth));
         }
@@ -103,5 +107,16 @@ pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
     if rng.roll_dice(1, 3) == 1 {
         result = Box::new(WaveformCollapseBuilder::derive_map(new_depth, result));
     }
-    result // */
+
+    if rng.roll_dice(1, 20) == 1 {
+        result = Box::new(PrefabBuilder::sectional(
+            new_depth,
+            prefab_builder::prefab_sections::UNDERGROUND_FORT,
+            result,
+        ));
+    }
+
+    result = Box::new(PrefabBuilder::vaults(new_depth, result));
+
+    result
 }

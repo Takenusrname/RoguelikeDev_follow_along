@@ -1,7 +1,6 @@
 use super::MapBuilder;
 use crate::{Map, Position, Rect, SHOW_MAPGEN_VISUALIZER, TileType, spawner};
 use bracket_lib::random::RandomNumberGenerator;
-use specs::prelude::*;
 
 const MIN_ROOM_SIZE: i32 = 8;
 

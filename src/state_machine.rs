@@ -7,6 +7,7 @@ use specs::prelude::*;
 
 pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
     let mut newrunstate = rs;
+
     match newrunstate {
         RunState::PreRun => {
             gs.run_systems();
@@ -203,6 +204,10 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                     newrunstate = gs.mapgen_next_state.unwrap();
                 }
             }
+        }
+        RunState::Screenshot => {
+            ctx.screenshot("screenshots/screenshot.png");
+            newrunstate = RunState::AwaitingInput;
         }
     }
 

@@ -9,7 +9,6 @@ use super::{
 };
 use crate::{Map, Position, SHOW_MAPGEN_VISUALIZER, TileType, spawner};
 use bracket_lib::random::RandomNumberGenerator;
-use specs::prelude::*;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum DrunkSpawnMode {

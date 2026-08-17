@@ -64,6 +64,7 @@ pub enum RunState {
     GameOver,
     MagicMapReveal { row: i32 },
     MapGeneration,
+    Screenshot,
 }
 
 struct State {
@@ -309,7 +310,7 @@ fn main() -> BError {
         });
     }// */
 
-    gs.ecs.insert(RunState::MapGeneration{});
+    gs.ecs.insert(RunState::MapGeneration {});
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to MQ".to_string()],
     });

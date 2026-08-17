@@ -6,7 +6,6 @@ use super::{
 };
 use crate::{Map, Position, Rect, SHOW_MAPGEN_VISUALIZER, map::TileType, spawner};
 use bracket_lib::random::RandomNumberGenerator;
-use specs::prelude::*;
 
 pub struct MapBoiler {
     map: Map,

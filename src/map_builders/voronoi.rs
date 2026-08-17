@@ -6,7 +6,6 @@ use super::{
 };
 use crate::{Map, Position, SHOW_MAPGEN_VISUALIZER, TileType, spawner};
 use bracket_lib::{geometry::Point, random::RandomNumberGenerator, terminal::DistanceAlg};
-use specs::prelude::*;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum DistanceAlgo {

@@ -12,7 +12,6 @@ use bracket_lib::{
     random::RandomNumberGenerator,
     terminal::{LineAlg::Bresenham, Point, line2d},
 };
-use specs::prelude::*;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum DLAAAlgo {

@@ -10,6 +10,7 @@ use std::{
 };
 
 #[derive(PartialEq, Copy, Clone)]
+#[allow(dead_code)]
 pub enum Symmetry {
     None,
     Horizontal,
