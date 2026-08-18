@@ -248,39 +248,51 @@ pub fn show_inventory(
     let backpack = gs.ecs.read_storage::<InBackpack>();
     let entities = gs.ecs.entities();
     let equiped = gs.ecs.read_storage::<Equipped>();
-
+    /*
     let inventory = (&backpack, &names)
         .join()
-        .filter(|item| item.0.owner == *player_entity);
-    let count = inventory.count();
+        .filter(|item| item.0.owner == *player_entity);*/
 
     let x = 15;
-    let mut y = (25 - (count / 2)) as i32;
     let w = 31;
 
     let fg = RGB::named(DEFAULT_FG);
     let bg: RGB;
     let title: &str;
+    let count: usize;
     if action == "drop" {
         title = " Inventory - Drop Item ";
         bg = RGB::named(DROP_BG);
+        let inventory = (&backpack, &names)
+            .join()
+            .filter(|item| item.0.owner == *player_entity);
+        count = inventory.count();
     } else if action == "use" {
         title = " Inventory - Use Item ";
         bg = RGB::named(INV_BG);
+        let inventory = (&backpack, &names)
+            .join()
+            .filter(|item| item.0.owner == *player_entity);
+        count = inventory.count();
     } else if action == "unequip" {
         title = " Inventory - Unequip Item ";
         bg = RGB::named(UNEQUIP_BG);
+        let inventory = (&equiped, &names)
+            .join()
+            .filter(|item| item.0.owner == *player_entity);
+        count = inventory.count();
     } else {
         title = " Error - Not Implemented ";
         bg = RGB::named(ERROR_BG);
+        count = 0usize;
     }
-
+    let mut y = (25 - (count / 2)) as i32;
     inventory_frame(ctx, count, x, y, w, fg, bg, title);
 
     let mut equippable: Vec<Entity> = Vec::new();
     let mut j = 0;
-    if action == "unequip" {
-        for (entity, _pack_equipped, name) in (&entities, &equiped, &names)
+    if action != "unequip" {
+        for (entity, _pack, name) in (&entities, &backpack, &names)
             .join()
             .filter(|item| item.1.owner == *player_entity)
         {
@@ -290,7 +302,7 @@ pub fn show_inventory(
             j += 1;
         }
     } else {
-        for (entity, _pack, name) in (&entities, &backpack, &names)
+        for (entity, _pack_equipped, name) in (&entities, &equiped, &names)
             .join()
             .filter(|item| item.1.owner == *player_entity)
         {
