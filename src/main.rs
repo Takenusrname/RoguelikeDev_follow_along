@@ -274,7 +274,7 @@ fn main() -> BError {
 
     let mut ctx = BTermBuilder::simple(80, 50)
         .unwrap()
-        .with_title("McGuffin Quest")
+        .with_title("NEED A TITLE")
         .with_font("cp437_8x8_mod.png", 8, 8)
         .with_font("cp437_12x12_mod.png", 12, 12)
         .with_font("cp437_16x16_mod.png", 16, 16)
@@ -300,12 +300,12 @@ fn main() -> BError {
     gs.ecs.insert(Point::new(0, 0));
     gs.ecs.insert(RandomNumberGenerator::new());
 
-    //let save = saveload_system::does_save_exist();
+    let save = saveload_system::does_save_exist();
 
     let player_entity = spawner::player(&mut gs.ecs, 0, 0);
     gs.ecs.insert(player_entity);
 
-    /*
+    
     if save {
         gs.ecs.insert(RunState::MainMenu {
             menu_sel: gui::MainMenuSelection::LoadGame,
@@ -316,9 +316,9 @@ fn main() -> BError {
         });
     }// */
 
-    gs.ecs.insert(RunState::MapGeneration {});
+    //gs.ecs.insert(RunState::MapGeneration {});
     gs.ecs.insert(gamelog::GameLog {
-        entries: vec!["Welcome to MQ".to_string()],
+        entries: vec!["Welcome to GAME".to_string()],
     });
 
     gs.ecs.insert(particle_system::ParticleBuilder::new());

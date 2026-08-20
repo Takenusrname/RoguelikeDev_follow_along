@@ -1,8 +1,8 @@
 use super::{
-    BuilderMap, InitialMapBuilder,
+    BuilderMap, InitialMapBuilder, MetaMapBuilder,
     common::{Symmetry, paint},
 };
-use crate::{Position, map::TileType};
+use crate::{Position, map::TileType, map_builders::common::Symmetry::None};
 use bracket_lib::{
     random::RandomNumberGenerator,
     terminal::{LineAlg::Bresenham, Point, line2d},
@@ -27,6 +27,12 @@ impl InitialMapBuilder for DLABuilder {
     fn build_map(&mut self, rng: &mut RandomNumberGenerator, build_data: &mut BuilderMap) {
         self.build(rng, build_data);
     }
+}
+
+impl MetaMapBuilder for DLABuilder {
+    fn build_map(&mut self, rng: &mut RandomNumberGenerator, build_data: &mut BuilderMap) {
+        self.build(rng, build_data);
+    }    
 }
 
 impl DLABuilder {
@@ -78,6 +84,11 @@ impl DLABuilder {
             symmetry: Symmetry::Horizontal,
             floor_percent: 0.25,
         })
+    }
+
+    #[allow(dead_code)]
+    pub fn heavy_erosion() -> Box<DLABuilder> {
+        Box::new(DLABuilder { algo: DLAAAlgorithm::WalkInwards, brush_size: 2, symmetry: None, floor_percent: 0.35 })
     }
 
     pub fn build(&mut self, rng: &mut RandomNumberGenerator, build_data: &mut BuilderMap) {

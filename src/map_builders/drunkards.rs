@@ -1,5 +1,5 @@
 use super::{
-    BuilderMap, InitialMapBuilder,
+    BuilderMap, MetaMapBuilder, InitialMapBuilder,
     common::{Symmetry, paint},
 };
 use crate::{Position, TileType};
@@ -28,6 +28,12 @@ impl InitialMapBuilder for DrunkardsWalkBuilder {
     fn build_map(&mut self, rng: &mut RandomNumberGenerator, build_data: &mut BuilderMap) {
         self.build(rng, build_data);
     }
+}
+
+impl MetaMapBuilder for DrunkardsWalkBuilder {
+    fn build_map(&mut self, rng: &mut RandomNumberGenerator, build_data: &mut BuilderMap) {
+        self.build(rng, build_data);
+    }    
 }
 
 impl DrunkardsWalkBuilder {
