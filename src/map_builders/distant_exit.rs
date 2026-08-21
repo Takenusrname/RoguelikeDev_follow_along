@@ -28,6 +28,9 @@ impl DistantExit {
         let mut exit_tile = (0, 0.0f32);
 
         for (i, tile) in build_data.map.tiles.iter_mut().enumerate() {
+            if *tile == TileType::DownStairs {
+                *tile = TileType::Floor;
+            } 
             if *tile == TileType::Floor {
                 let distance_to_start = dm.map[i];
                 if distance_to_start != f32::MAX {
