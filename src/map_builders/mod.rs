@@ -10,6 +10,7 @@ mod common;
 mod cull_unreachable;
 mod distant_exit;
 mod dla;
+mod door_placement;
 mod drunkards;
 mod map_border;
 mod maze;
@@ -39,6 +40,7 @@ use common::*;
 use cull_unreachable::CullUnreachable;
 use distant_exit::DistantExit;
 use dla::DLABuilder;
+use door_placement::DoorPlacement;
 use drunkards::DrunkardsWalkBuilder;
 use map_border::MapBorder;
 use maze::MazeBuilder;
@@ -298,16 +300,18 @@ pub fn random_builder(new_depth: i32, rng: &mut RandomNumberGenerator) -> Builde
         builder.with(DistantExit::new());
     }
     builder.with(MapBorder::new());
+    builder.with(DoorPlacement::new());
     builder.with(PrefabBuilder::vaults());
     // */
     /*
     let mut builder = BuilderChain::new(new_depth);
-    builder.start_with(SimpleMapBuilder::new());
-    builder.with(RoomDrawer::new());
-    builder.with(RoomSorter::new(RoomSort::LEFTMOST));
-    builder.with(StraightLineCorridors::new());
+    builder.start_with(BspInteriorBuilder::new());
+    builder.with(DoorPlacement::new());
+    //builder.with(RoomDrawer::new());
+    //builder.with(RoomSorter::new(RoomSort::LEFTMOST));
+    //builder.with(StraightLineCorridors::new());
     builder.with(RoomBasedSpawner::new());
-    builder.with(CorridorSpawner::new());
+    //builder.with(CorridorSpawner::new());
     builder.with(RoomBasedStairs::new());
     builder.with(RoomBasedStartingPosition::new());
     // */

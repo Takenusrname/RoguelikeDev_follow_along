@@ -31,6 +31,7 @@ pub struct Map {
     pub blocked: Vec<bool>,
     pub depth: i32,
     pub bloodstains: HashSet<usize>,
+    pub view_blocked: HashSet<usize>,
 
     #[serde(skip)]
     pub tile_content: Vec<Vec<Entity>>,
@@ -44,7 +45,8 @@ impl Algorithm2D for Map {
 
 impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
-        self.tiles[idx as usize] == TileType::Wall
+        let idx_u = idx as usize;
+        self.tiles[idx_u] == TileType::Wall || self.view_blocked.contains(&idx_u)
     }
 
     fn get_pathing_distance(&self, idx1: usize, idx2: usize) -> f32 {
@@ -102,6 +104,7 @@ impl Map {
             depth: new_depth,
             bloodstains: HashSet::new(),
             tile_content: vec![Vec::new(); MAPCOUNT],
+            view_blocked: HashSet::new(),
         }
     }
     pub fn xy_idx(&self, x: i32, y: i32) -> usize {
@@ -246,7 +249,7 @@ fn wall_glyph(map: &Map, x: i32, y: i32) -> FontCharType {
             14 => 203, // ╦ wall to east west and south
             15 => 206, // ╬ wall to north, east, south and west
             _ => 35,   // # missed one?
-        } 
+        }
     } else {
         35
     }

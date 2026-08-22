@@ -92,6 +92,7 @@ pub fn spawn_entity(ecs: &mut World, spawn: &(&usize, &String)) {
         "Rations" => rations(ecs, x, y),
         "Magic Mapping Scroll" => magic_mapping_scroll(ecs, x, y),
         "Bear Trap" => bear_trap(ecs, x, y),
+        "Door" => door(ecs, x, y),
         _ => {}
     }
 }
@@ -202,6 +203,23 @@ fn confusion_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Consumable {})
         .with(Ranged { range: 6 })
         .with(Confusion { turns: 4 })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn door(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position{x, y})
+        .with(Renderable {
+            glyph: to_cp437('+'),
+            fg: RGB::named(DOOR_FG),
+            bg: RGB::named(LIT_BG),
+            render_order: 2
+        })
+        .with(Name{name: "Door".to_string()})
+        .with(BlocksTile{})
+        .with(BlocksVisibility{})
+        .with(Door{open: false})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }

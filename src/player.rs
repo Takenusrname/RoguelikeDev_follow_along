@@ -1,10 +1,11 @@
-use bracket_lib::{geometry::Point, prelude::VirtualKeyCode, terminal::BTerm};
+use bracket_lib::{geometry::Point, prelude::VirtualKeyCode, terminal::{BTerm, to_cp437}};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
 use super::{
-    CombatStats, EntityMoved, HungerClock, HungerState, Item, Map, Monster, Player, Position,
-    RunState, State, TileType, Viewshed, WantsToMelee, WantsToPickupItem, gamelog::GameLog,
+    BlocksTile, BlocksVisibility, CombatStats, Door, EntityMoved, HungerClock, HungerState, Item,
+    Map, Monster, Player, Position, Renderable, RunState, State, TileType, Viewshed, WantsToMelee,
+    WantsToPickupItem, gamelog::GameLog,
 };
 
 fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
@@ -16,6 +17,10 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut viewsheds = ecs.write_storage::<Viewshed>();
     let mut wants_to_melee = ecs.write_storage::<WantsToMelee>();
     let mut entity_moved = ecs.write_storage::<EntityMoved>();
+    let mut doors = ecs.write_storage::<Door>();
+    let mut blocks_visibility = ecs.write_storage::<BlocksVisibility>();
+    let mut blocks_movement = ecs.write_storage::<BlocksTile>();
+    let mut renderables = ecs.write_storage::<Renderable>();
 
     for (entity, _player, pos, viewshed) in
         (&entities, &mut players, &mut positions, &mut viewsheds).join()
@@ -42,6 +47,15 @@ fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
                     )
                     .expect("Add target failed");
                 return;
+            }
+            let door = doors.get_mut(*potential_target);
+            if let Some(door) = door {
+                door.open = true;
+                blocks_visibility.remove(*potential_target);
+                blocks_movement.remove(*potential_target);
+                let glyph = renderables.get_mut(*potential_target).unwrap();
+                glyph.glyph = to_cp437('/');
+                viewshed.dirty = true;
             }
         }
 

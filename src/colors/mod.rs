@@ -41,6 +41,7 @@ pub const MEM_FG: (u8, u8, u8) = DB32_COLOR07;
 pub const AETHER: (u8, u8, u8) = DB32_COLOR18;
 pub const STAIRS_FG: (u8, u8, u8) = DB32_COLOR13;
 pub const BLOOD_BG: (u8, u8, u8) = DB32_COLOR05;
+pub const DOOR_FG: (u8, u8, u8) = DB32_COLOR28;
 
 // Items
 pub const POT_HEALTH_FG: (u8, u8, u8) = DB32_COLOR04;

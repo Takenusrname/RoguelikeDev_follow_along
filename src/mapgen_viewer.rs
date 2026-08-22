@@ -21,11 +21,10 @@ impl GameState for State {
 fn main() -> BError {
     link_resource!(FONT_S, "resources/cp437_8x8_mod.png");
 
-    let mut ctx_main = BTermBuilder::simple(82, 62)
+    let mut ctx_main = BTermBuilder::simple(80, 60)
         .unwrap()
         .with_title("Map Generator Viewer")
         .with_font("cp437_8x8_mod.png", 8, 8)
-        .with_sparse_console(60, 60, "cp437_8x8_mod.png")
         .build()?;
 
     ctx_main.set_active_font(1, false);
