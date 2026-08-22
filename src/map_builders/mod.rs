@@ -18,15 +18,18 @@ mod room_based_spawner;
 mod room_based_stairs;
 mod room_based_starting_position;
 mod room_corner_rounding;
+mod room_corridor_spawner;
 mod room_draw;
 mod room_exploder;
 mod room_sorter;
 mod rooms_corridors_bsp;
 mod rooms_corridors_dogleg;
+mod rooms_corridors_lines;
+mod rooms_corridors_nearest;
 mod simple_map;
 mod voronoi;
 mod voronoi_spawning;
-mod waveform_collapse;
+//mod waveform_collapse;
 
 use area_starting_points::{AreaStartingPosition, XStart, YStart};
 use bsp_dungeon::BspDungeonBuilder;
@@ -46,21 +49,24 @@ use room_based_spawner::RoomBasedSpawner;
 use room_based_stairs::RoomBasedStairs;
 use room_based_starting_position::RoomBasedStartingPosition;
 use room_corner_rounding::RoomCornerRounder;
+use room_corridor_spawner::CorridorSpawner;
 use room_draw::RoomDrawer;
 use room_exploder::RoomExploder;
 use room_sorter::{RoomSort, RoomSorter};
 use rooms_corridors_bsp::BspCorridors;
 use rooms_corridors_dogleg::DoglegCorridors;
+use rooms_corridors_lines::StraightLineCorridors;
+use rooms_corridors_nearest::NearestCorridors;
 use simple_map::SimpleMapBuilder;
 use voronoi::VoronoiCellBuilder;
 use voronoi_spawning::VoronoiSpawning;
-use waveform_collapse::WaveformCollapseBuilder;
 
 pub struct BuilderMap {
     pub spawn_list: Vec<(usize, String)>,
     pub map: Map,
     pub starting_pos: Option<Position>,
     pub rooms: Option<Vec<Rect>>,
+    pub corridors: Option<Vec<Vec<usize>>>,
     pub history: Vec<Map>,
 }
 
@@ -92,6 +98,7 @@ impl BuilderChain {
                 map: Map::new(new_depth),
                 starting_pos: None,
                 rooms: None,
+                corridors: None,
                 history: Vec::new(),
             },
         }
@@ -190,10 +197,17 @@ fn random_room_builder(rng: &mut RandomNumberGenerator, builder: &mut BuilderCha
 
         builder.with(RoomDrawer::new());
 
-        let corridor_roll = rng.roll_dice(1, 2);
+        let corridor_roll = rng.roll_dice(1, 4);
         match corridor_roll {
             1 => builder.with(DoglegCorridors::new()),
+            2 => builder.with(NearestCorridors::new()),
+            3 => builder.with(StraightLineCorridors::new()),
             _ => builder.with(BspCorridors::new()),
+        }
+
+        let cspawn_roll = rng.roll_dice(1, 2);
+        if cspawn_roll == 1 {
+            builder.with(CorridorSpawner::new());
         }
 
         let mod_roll = rng.roll_dice(1, 6);
@@ -232,12 +246,12 @@ fn random_shape_builder(rng: &mut RandomNumberGenerator, builder: &mut BuilderCh
         1 => builder.start_with(CellularAutomataBuilder::new()),
         2 => builder.start_with(DrunkardsWalkBuilder::open_area()),
         3 => builder.start_with(DrunkardsWalkBuilder::open_halls()),
-        4 =>  builder.start_with(DrunkardsWalkBuilder::winding_passages()),
-        5 =>  builder.start_with(DrunkardsWalkBuilder::fat_passages()),
-        6 =>  builder.start_with(DrunkardsWalkBuilder::fearful_symmetry()),
-        7 =>  builder.start_with(MazeBuilder::new()),
-        8 =>  builder.start_with(DLABuilder::walk_inwards()),
-        9 =>  builder.start_with(DLABuilder::walk_outwards()),
+        4 => builder.start_with(DrunkardsWalkBuilder::winding_passages()),
+        5 => builder.start_with(DrunkardsWalkBuilder::fat_passages()),
+        6 => builder.start_with(DrunkardsWalkBuilder::fearful_symmetry()),
+        7 => builder.start_with(MazeBuilder::new()),
+        8 => builder.start_with(DLABuilder::walk_inwards()),
+        9 => builder.start_with(DLABuilder::walk_outwards()),
         10 => builder.start_with(DLABuilder::central_attractor()),
         11 => builder.start_with(DLABuilder::insectoid()),
         12 => builder.start_with(VoronoiCellBuilder::pythagoras()),
@@ -266,6 +280,7 @@ pub fn random_builder(new_depth: i32, rng: &mut RandomNumberGenerator) -> Builde
         _ => random_shape_builder(rng, &mut builder),
     }
 
+    /*
     if rng.roll_dice(1, 3) == 1 {
         builder.with(WaveformCollapseBuilder::new());
 
@@ -274,7 +289,7 @@ pub fn random_builder(new_depth: i32, rng: &mut RandomNumberGenerator) -> Builde
         builder.with(CullUnreachable::new());
         builder.with(VoronoiSpawning::new());
         builder.with(DistantExit::new());
-    }
+    }*/
 
     // NEEDTOFIX: Has chance to over write exit
     if rng.roll_dice(1, 20) == 1 {
@@ -290,8 +305,9 @@ pub fn random_builder(new_depth: i32, rng: &mut RandomNumberGenerator) -> Builde
     builder.start_with(SimpleMapBuilder::new());
     builder.with(RoomDrawer::new());
     builder.with(RoomSorter::new(RoomSort::LEFTMOST));
-    builder.with(BspCorridors::new());
+    builder.with(StraightLineCorridors::new());
     builder.with(RoomBasedSpawner::new());
+    builder.with(CorridorSpawner::new());
     builder.with(RoomBasedStairs::new());
     builder.with(RoomBasedStartingPosition::new());
     // */

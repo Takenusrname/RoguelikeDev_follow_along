@@ -226,23 +226,28 @@ fn wall_glyph(map: &Map, x: i32, y: i32) -> FontCharType {
         mask += 8;
     }
 
-    match mask {
-        0 => 9,    // ○ pillar
-        1 => 208,  // ╨ wall only to north
-        2 => 210,  // ╥ wall only to south
-        3 => 186,  // ║ wall to north and south
-        4 => 181,  // ╡ wall only to west
-        5 => 188,  // ╝ wall to north and west
-        6 => 187,  // ╗ Wall to south and west
-        7 => 185,  // ╣ wall to north, south and west
-        8 => 198,  // ╞ wall to the east
-        9 => 200,  // ╚ wall to north and east
-        10 => 201, // ╔ wall to south and east
-        11 => 204, // ╠ wall to north, south and east
-        12 => 205, // ═ wall to east and west
-        13 => 202, // ╩ wall to east, west and north
-        14 => 203, // ╦ wall to east west and south
-        15 => 206, // ╬ wall to north, east, south and west
-        _ => 35,   // # missed one?
+    let idx = map.xy_idx(x, y);
+    if map.visible_tiles[idx] == true {
+        match mask {
+            0 => 9,    // ○ pillar
+            1 => 208,  // ╨ wall only to north
+            2 => 210,  // ╥ wall only to south
+            3 => 186,  // ║ wall to north and south
+            4 => 181,  // ╡ wall only to west
+            5 => 188,  // ╝ wall to north and west
+            6 => 187,  // ╗ Wall to south and west
+            7 => 185,  // ╣ wall to north, south and west
+            8 => 198,  // ╞ wall to the east
+            9 => 200,  // ╚ wall to north and east
+            10 => 201, // ╔ wall to south and east
+            11 => 204, // ╠ wall to north, south and east
+            12 => 205, // ═ wall to east and west
+            13 => 202, // ╩ wall to east, west and north
+            14 => 203, // ╦ wall to east west and south
+            15 => 206, // ╬ wall to north, east, south and west
+            _ => 35,   // # missed one?
+        } 
+    } else {
+        35
     }
 }
