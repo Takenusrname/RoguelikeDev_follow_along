@@ -1,4 +1,4 @@
-use super::{Hidden, Map, Name, Player, Position, Viewshed, gamelog::GameLog};
+use super::{BlocksVisibility, Hidden, Map, Name, Player, Position, Viewshed, gamelog::GameLog};
 use bracket_lib::{geometry::Point, pathfinding::field_of_view, random::RandomNumberGenerator};
 use specs::prelude::*;
 
@@ -7,6 +7,7 @@ pub struct VisibilitySystem {}
 impl<'a> System<'a> for VisibilitySystem {
     type SystemData = (
         Entities<'a>,
+        ReadStorage<'a, BlocksVisibility>,
         WriteExpect<'a, GameLog>,
         WriteStorage<'a, Hidden>,
         WriteExpect<'a, Map>,
@@ -18,8 +19,24 @@ impl<'a> System<'a> for VisibilitySystem {
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut log, mut hidden, mut map, names, mut rng, player, pos, mut viewshed) =
-            data;
+        let (
+            entities,
+            blocks_visibility,
+            mut log,
+            mut hidden,
+            mut map,
+            names,
+            mut rng,
+            player,
+            pos,
+            mut viewshed,
+        ) = data;
+
+        map.view_blocked.clear();
+        for (block_pos, _block) in (&pos, &blocks_visibility).join() {
+            let idx = map.xy_idx(block_pos.x, block_pos.y);
+            map.view_blocked.insert(idx);
+        }
 
         for (ent, viewshed, pos) in (&entities, &mut viewshed, &pos).join() {
             if viewshed.dirty {

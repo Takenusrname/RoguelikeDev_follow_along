@@ -1,24 +1,13 @@
-use super::{Rect, colors::*};
 use bracket_lib::{
     algorithm_traits::{Algorithm2D, BaseMap},
-    color::RGB,
     geometry::{DistanceAlg::Pythagoras, Point},
     prelude::SmallVec,
-    random::RandomNumberGenerator,
-    terminal::{BTerm, FontCharType, to_cp437},
 };
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
-use std::{
-    cmp::{max, min},
-    collections::HashSet,
-};
+use std::collections::HashSet;
 
-pub const MAPWIDTH: usize = 80;
-pub const MAPHEIGHT: usize = 43;
-pub const MAPCOUNT: usize = MAPHEIGHT * MAPWIDTH;
-
-#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Copy, Eq, Hash, Clone, Serialize, Deserialize)]
 pub enum TileType {
     Wall,
     Floor,
@@ -28,7 +17,6 @@ pub enum TileType {
 #[derive(Default, Serialize, Deserialize, Clone)]
 pub struct Map {
     pub tiles: Vec<TileType>,
-    pub rooms: Vec<Rect>,
     pub width: i32,
     pub height: i32,
     pub revealed_tiles: Vec<bool>,
@@ -36,6 +24,7 @@ pub struct Map {
     pub blocked: Vec<bool>,
     pub depth: i32,
     pub bloodstains: HashSet<usize>,
+    pub view_blocked: HashSet<usize>,
 
     #[serde(skip)]
     pub tile_content: Vec<Vec<Entity>>,
@@ -49,7 +38,8 @@ impl Algorithm2D for Map {
 
 impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
-        self.tiles[idx as usize] == TileType::Wall
+        let idx_u = idx as usize;
+        self.tiles[idx_u] == TileType::Wall || self.view_blocked.contains(&idx_u)
     }
 
     fn get_pathing_distance(&self, idx1: usize, idx2: usize) -> f32 {
@@ -96,35 +86,23 @@ impl BaseMap for Map {
 }
 
 impl Map {
+    pub fn new(new_depth: i32, width: i32, height: i32) -> Map {
+        let map_count = (width * height) as usize;
+        Map {
+            tiles: vec![TileType::Wall; map_count],
+            width,
+            height,
+            revealed_tiles: vec![false; map_count],
+            visible_tiles: vec![false; map_count],
+            blocked: vec![false; map_count],
+            depth: new_depth,
+            bloodstains: HashSet::new(),
+            tile_content: vec![Vec::new(); map_count],
+            view_blocked: HashSet::new(),
+        }
+    }
     pub fn xy_idx(&self, x: i32, y: i32) -> usize {
         (y as usize * self.width as usize) + x as usize
-    }
-
-    fn apply_room_to_map(&mut self, room: &Rect) {
-        for y in room.y1 + 1..=room.y2 {
-            for x in room.x1 + 1..=room.x2 {
-                let idx = self.xy_idx(x, y);
-                self.tiles[idx] = TileType::Floor;
-            }
-        }
-    }
-
-    fn apply_h_tunnel(&mut self, x1: i32, x2: i32, y: i32) {
-        for x in min(x1, x2)..=max(x1, x2) {
-            let idx = self.xy_idx(x, y);
-            if idx > 0 && idx < self.width as usize * self.height as usize {
-                self.tiles[idx as usize] = TileType::Floor;
-            }
-        }
-    }
-
-    fn apply_v_tunnel(&mut self, y1: i32, y2: i32, x: i32) {
-        for y in min(y1, y2)..=max(y1, y2) {
-            let idx = self.xy_idx(x, y);
-            if idx > 0 && idx < self.width as usize * self.height as usize {
-                self.tiles[idx as usize] = TileType::Floor;
-            }
-        }
     }
 
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {
@@ -145,179 +123,5 @@ impl Map {
         for content in self.tile_content.iter_mut() {
             content.clear();
         }
-    }
-
-    pub fn new_map_rooms_and_corridors(new_depth: i32) -> Map {
-        let mut map = Map {
-            tiles: vec![TileType::Wall; MAPCOUNT],
-            rooms: Vec::new(),
-            width: MAPWIDTH as i32,
-            height: MAPHEIGHT as i32,
-            revealed_tiles: vec![false; MAPCOUNT],
-            visible_tiles: vec![false; MAPCOUNT],
-            blocked: vec![false; MAPCOUNT],
-            tile_content: vec![Vec::new(); MAPCOUNT],
-            depth: new_depth,
-            bloodstains: HashSet::new(),
-        };
-
-        const MAX_ROOMS: i32 = 30;
-        const MIN_SIZE: i32 = 6;
-        const MAX_SIZE: i32 = 10;
-
-        let mut rng = RandomNumberGenerator::new();
-
-        for _i in 0..MAX_ROOMS {
-            let w = rng.range(MIN_SIZE, MAX_SIZE);
-            let h = rng.range(MIN_SIZE, MAX_SIZE);
-            let x = rng.roll_dice(1, map.width - w - 1) - 1;
-            let y = rng.roll_dice(1, map.height - h - 1) - 1;
-            let new_room = Rect::new(x, y, w, h);
-            let mut ok = true;
-            for other_room in map.rooms.iter() {
-                if new_room.intersect(other_room) {
-                    ok = false
-                }
-            }
-            if ok {
-                map.apply_room_to_map(&new_room);
-
-                if !map.rooms.is_empty() {
-                    let (new_x, new_y) = new_room.center();
-                    let (prev_x, prev_y) = map.rooms[map.rooms.len() - 1].center();
-                    if rng.range(0, 2) == 1 {
-                        map.apply_h_tunnel(prev_x, new_x, prev_y);
-                        map.apply_v_tunnel(prev_y, new_y, new_x);
-                    } else {
-                        map.apply_v_tunnel(prev_y, new_y, prev_x);
-                        map.apply_h_tunnel(prev_x, new_x, new_y);
-                    }
-                }
-                map.rooms.push(new_room);
-            }
-        }
-
-        let stairs_pos = map.rooms[map.rooms.len() - 1].center();
-        let stairs_idx = map.xy_idx(stairs_pos.0, stairs_pos.1);
-        map.tiles[stairs_idx] = TileType::DownStairs;
-
-        map
-    }
-}
-
-pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
-    let map = ecs.fetch::<Map>();
-    let mut y = 0;
-    let mut x = 0;
-
-    for (idx, tile) in map.tiles.iter().enumerate() {
-        if map.revealed_tiles[idx] {
-            let glyph;
-            let mut fg: RGB;
-            let mut bg: RGB;
-            match tile {
-                TileType::Floor => {
-                    glyph = to_cp437('.');
-                    fg = RGB::named(FLOOR_FG);
-                    bg = RGB::named(FLOOR_BG);
-                }
-                TileType::Wall => {
-                    glyph = wall_glyph(&*map, x, y);
-                    fg = RGB::named(WALL_FG);
-                    bg = RGB::named(WALL_BG);
-                }
-                TileType::DownStairs => {
-                    glyph = to_cp437('»');
-                    fg = RGB::named(STAIRS_FG);
-                    bg = RGB::named(DEFAULT_BG);
-                }
-            }
-            if map.bloodstains.contains(&idx) { bg = RGB::named(BLOOD_BG);}
-            if !map.visible_tiles[idx] {
-                fg = RGB::named(MEM_FG);
-                bg = RGB::named(DEFAULT_BG);
-            }
-            ctx.set(x, y, fg, bg, glyph)
-        } else {
-            let glyph = to_cp437('≈');
-            let fg = RGB::named(AETHER);
-            let bg = RGB::named(DEFAULT_BG);
-            ctx.set(x, y, fg, bg, glyph);
-        }
-        x += 1;
-        if x > 79 {
-            x = 0;
-            y += 1;
-        }
-    }
-}
-
-/// Checks if the tile is in bounds.
-/// if the tile is inbounds it returns true and
-/// if it is out of bounds it returns false
-pub fn is_inbounds(map: &Map, x: i32, y: i32) -> bool {
-    if x < 0 || x > map.width - 1 || y < 0 || y > map.height - 1 {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-/// Checks if the tile is a wall and it's reviealed
-fn is_revealed_and_wall(map: &Map, x: i32, y: i32) -> bool {
-    let idx = map.xy_idx(x, y);
-    map.tiles[idx] == TileType::Wall && map.revealed_tiles[idx]
-}
-
-/// Checks if the wall tile has other wall tiles if it does
-/// it grabs the glyph tied to the mask depending how many
-/// other wall are next to it.
-fn wall_glyph(map: &Map, x: i32, y: i32) -> FontCharType {
-    /*
-    8-bit mask values
-    1, 2, 4, 8
-
-      1
-    4 # 8
-      2
-    */
-
-    let mut mask: u8 = 0;
-
-    // Check North
-    if is_inbounds(map, x, y - 1) && is_revealed_and_wall(map, x, y - 1) {
-        mask += 1;
-    }
-    // Check South
-    if is_inbounds(map, x, y + 1) && is_revealed_and_wall(map, x, y + 1) {
-        mask += 2;
-    }
-    // Check West
-    if is_inbounds(map, x - 1, y) && is_revealed_and_wall(map, x - 1, y) {
-        mask += 4;
-    }
-    // Check East
-    if is_inbounds(map, x + 1, y) && is_revealed_and_wall(map, x + 1, y) {
-        mask += 8;
-    }
-
-    match mask {
-        0 => 9,    // ○ pillar
-        1 => 208,  // ╨ wall only to north
-        2 => 210,  // ╥ wall only to south
-        3 => 186,  // ║ wall to north and south
-        4 => 181,  // ╡ wall only to west
-        5 => 188,  // ╝ wall to north and west
-        6 => 187,  // ╗ Wall to south and west
-        7 => 185,  // ╣ wall to north, south and west
-        8 => 198,  // ╞ wall to the east
-        9 => 200,  // ╚ wall to north and east
-        10 => 201, // ╔ wall to south and east
-        11 => 204, // ╠ wall to north, south and east
-        12 => 205, // ═ wall to east and west
-        13 => 202, // ╩ wall to east, west and north
-        14 => 203, // ╦ wall to east west and south
-        15 => 206, // ╬ wall to north, east, south and west
-        _ => 35,   // # missed one?
     }
 }

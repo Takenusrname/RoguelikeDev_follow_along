@@ -1,6 +1,6 @@
 use super::{
     Map, RunState, State, Viewshed, colors::*, components::*, gamelog::GameLog,
-    rex_assets::RexAssets,
+    rex_assets::RexAssets, camera::get_screen_bounds,
 };
 use bracket_lib::{
     color::RGB,
@@ -114,19 +114,25 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
 }
 
 fn draw_tooltips(ecs: &World, ctx: &mut BTerm) {
+    let (min_x, _max_x, min_y, _max_y) = get_screen_bounds(ecs, ctx);
+
     let map = ecs.fetch::<Map>();
     let names = ecs.read_storage::<Name>();
     let positions = ecs.read_storage::<Position>();
     let hidden = ecs.read_storage::<Hidden>();
 
     let mouse_pos = ctx.mouse_pos();
-    if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height {
+    let mut mouse_map_pos = mouse_pos;
+    mouse_map_pos.0 += min_x;
+    mouse_map_pos.1 += min_y;
+    if mouse_map_pos.0 >= map.width - 1 || mouse_map_pos.1 >= map.height - 1 ||mouse_map_pos.0 < 1 || mouse_map_pos.1 < 1 {
         return;
     }
+    if !map.visible_tiles[map.xy_idx(mouse_map_pos.0, mouse_map_pos.1)] {return;}
     let mut tooltip: Vec<String> = Vec::new();
     for (name, position, _hidden) in (&names, &positions, !&hidden).join() {
         let idx = map.xy_idx(position.x, position.y);
-        if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
+        if position.x == mouse_map_pos.0 && position.y == mouse_map_pos.1 && map.visible_tiles[idx] {
             tooltip.push(name.name.to_string());
         }
     }
@@ -248,39 +254,51 @@ pub fn show_inventory(
     let backpack = gs.ecs.read_storage::<InBackpack>();
     let entities = gs.ecs.entities();
     let equiped = gs.ecs.read_storage::<Equipped>();
-
+    /*
     let inventory = (&backpack, &names)
         .join()
-        .filter(|item| item.0.owner == *player_entity);
-    let count = inventory.count();
+        .filter(|item| item.0.owner == *player_entity);*/
 
     let x = 15;
-    let mut y = (25 - (count / 2)) as i32;
     let w = 31;
 
     let fg = RGB::named(DEFAULT_FG);
     let bg: RGB;
     let title: &str;
+    let count: usize;
     if action == "drop" {
         title = " Inventory - Drop Item ";
         bg = RGB::named(DROP_BG);
+        let inventory = (&backpack, &names)
+            .join()
+            .filter(|item| item.0.owner == *player_entity);
+        count = inventory.count();
     } else if action == "use" {
         title = " Inventory - Use Item ";
         bg = RGB::named(INV_BG);
+        let inventory = (&backpack, &names)
+            .join()
+            .filter(|item| item.0.owner == *player_entity);
+        count = inventory.count();
     } else if action == "unequip" {
         title = " Inventory - Unequip Item ";
         bg = RGB::named(UNEQUIP_BG);
+        let inventory = (&equiped, &names)
+            .join()
+            .filter(|item| item.0.owner == *player_entity);
+        count = inventory.count();
     } else {
         title = " Error - Not Implemented ";
         bg = RGB::named(ERROR_BG);
+        count = 0usize;
     }
-
+    let mut y = (25 - (count / 2)) as i32;
     inventory_frame(ctx, count, x, y, w, fg, bg, title);
 
     let mut equippable: Vec<Entity> = Vec::new();
     let mut j = 0;
-    if action == "unequip" {
-        for (entity, _pack_equipped, name) in (&entities, &equiped, &names)
+    if action != "unequip" {
+        for (entity, _pack, name) in (&entities, &backpack, &names)
             .join()
             .filter(|item| item.1.owner == *player_entity)
         {
@@ -290,7 +308,7 @@ pub fn show_inventory(
             j += 1;
         }
     } else {
-        for (entity, _pack, name) in (&entities, &backpack, &names)
+        for (entity, _pack_equipped, name) in (&entities, &equiped, &names)
             .join()
             .filter(|item| item.1.owner == *player_entity)
         {
@@ -324,6 +342,7 @@ pub fn ranged_target(
     ctx: &mut BTerm,
     range: i32,
 ) -> (ItemMenuResult, Option<Point>) {
+    let (min_x, max_x, min_y, max_y) = get_screen_bounds(&gs.ecs, ctx);
     let player_entity = gs.ecs.fetch::<Entity>();
     let player_pos = gs.ecs.fetch::<Point>();
     let viewsheds = gs.ecs.read_storage::<Viewshed>();
@@ -342,8 +361,12 @@ pub fn ranged_target(
         for idx in visible.visible_tiles.iter() {
             let distance = DistanceAlg::Pythagoras.distance2d(*player_pos, *idx);
             if distance <= range as f32 {
-                ctx.set_bg(idx.x, idx.y, RGB::named(RANGE_BG));
-                available_cells.push(idx);
+                let screen_x = idx.x - min_x;
+                let screen_y = idx.y - min_y;
+                if screen_x > 1 && screen_x < (max_x - min_x) - 1 && screen_y > 1 && screen_y < (max_y - min_y) - 1 {
+                    ctx.set_bg(idx.x, idx.y, RGB::named(RANGE_BG));
+                    available_cells.push(idx);
+                }
             }
         }
     } else {
@@ -351,9 +374,12 @@ pub fn ranged_target(
     }
 
     let mouse_pos = ctx.mouse_pos();
+    let mut mouse_map_pos = mouse_pos;
+    mouse_map_pos.0 += min_x;
+    mouse_map_pos.1 += min_y;
     let mut valid_target = false;
     for idx in available_cells.iter() {
-        if idx.x == mouse_pos.0 && idx.y == mouse_pos.1 {
+        if idx.x == mouse_map_pos.0 && idx.y == mouse_map_pos.1 {
             valid_target = true;
         }
     }
@@ -362,7 +388,7 @@ pub fn ranged_target(
         if ctx.left_click {
             return (
                 ItemMenuResult::Selected,
-                Some(Point::new(mouse_pos.0, mouse_pos.1)),
+                Some(Point::new(mouse_map_pos.0, mouse_map_pos.1)),
             );
         }
     } else {
@@ -483,9 +509,9 @@ pub fn main_menu(gs: &mut State, ctx: &mut BTerm) -> MainMenuResult {
 }
 
 pub fn game_over(ctx: &mut BTerm) -> GameOverResult {
-    ctx.cls_bg(RGB::named(DEFAULT_BG));
+    //ctx.cls_bg(RGB::named(DEFAULT_BG));
     let line1 = "You DIED!";
-    let line2 = "You Failed to finish your Quest.";
+    let line2 = "You Failed to collect the McGuffin!.";
     let line3 = "Press any key to return to the Menu";
     ctx.print_color_centered(15, RGB::named(DEATH_FG), RGB::named(DEFAULT_BG), line1);
     ctx.print_color_centered(17, RGB::named(DEFAULT_FG), RGB::named(DEFAULT_BG), line2);

@@ -11,10 +11,12 @@ use std::convert::Infallible as NoError;
 pub fn component_registration(ecs: &mut World) {
     ecs.register::<AreaOfEffect>();
     ecs.register::<BlocksTile>();
+    ecs.register::<BlocksVisibility>();
     ecs.register::<CombatStats>();
     ecs.register::<Confusion>();
     ecs.register::<Consumable>();
     ecs.register::<DefenseBonus>();
+    ecs.register::<Door>();
     ecs.register::<EntityMoved>();
     ecs.register::<EntryTrigger>();
     ecs.register::<Equippable>();
@@ -55,6 +57,9 @@ pub struct AreaOfEffect {
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct BlocksTile {}
 
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct BlocksVisibility {}
+
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct CombatStats {
     pub max_hp: i32,
@@ -74,6 +79,11 @@ pub struct Consumable {}
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct DefenseBonus {
     pub defense: i32,
+}
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct Door {
+    pub open: bool
 }
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]

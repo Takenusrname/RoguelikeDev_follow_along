@@ -1,11 +1,13 @@
 use super::{
-    MAPHEIGHT, MAPWIDTH, Map, RunState, State, components::*, gui, player_input, saveload_system,
+    Map, RunState, SHOW_MAPGEN_VISUALIZER, State, camera::render_debug_map, components::*, gui,
+    player_input, saveload_system,
 };
 use bracket_lib::terminal::BTerm;
 use specs::prelude::*;
 
 pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
     let mut newrunstate = rs;
+
     match newrunstate {
         RunState::PreRun => {
             gs.run_systems();
@@ -132,7 +134,11 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 }
 
                 gui::MainMenuResult::Selected { selected } => match selected {
-                    gui::MainMenuSelection::NewGame => newrunstate = RunState::PreRun,
+                    gui::MainMenuSelection::NewGame => {
+                        gs.game_over_cleanup();
+                        //gs.generate_world_map(1);
+                        newrunstate = RunState::MapGeneration
+                    }
                     gui::MainMenuSelection::LoadGame => {
                         saveload_system::load_game(&mut gs.ecs);
                         newrunstate = RunState::AwaitingInput;
@@ -167,20 +173,41 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
 
         RunState::NextLevel => {
             gs.goto_next_level();
-            newrunstate = RunState::PreRun;
+            gs.mapgen_next_state = Some(RunState::PreRun);
+            newrunstate = RunState::MapGeneration;
         }
 
         RunState::MagicMapReveal { row } => {
             let mut map = gs.ecs.fetch_mut::<Map>();
-            for x in 0..MAPWIDTH {
+            for x in 0..map.width {
                 let idx = map.xy_idx(x as i32, row);
                 map.revealed_tiles[idx] = true;
             }
-            if row as usize == MAPHEIGHT - 1 {
+            if row == map.height - 1 {
                 newrunstate = RunState::MonsterTurn;
             } else {
                 newrunstate = RunState::MagicMapReveal { row: row + 1 }
             }
+        }
+        RunState::MapGeneration => {
+            if !SHOW_MAPGEN_VISUALIZER {
+                newrunstate = gs.mapgen_next_state.unwrap();
+            }
+            ctx.cls();
+            render_debug_map(&gs.mapgen_history[gs.mapgen_index], ctx);
+
+            gs.mapgen_timer += ctx.frame_time_ms;
+            if gs.mapgen_timer > 300.0 {
+                gs.mapgen_timer = 0.0;
+                gs.mapgen_index += 1;
+                if gs.mapgen_index >= gs.mapgen_history.len() {
+                    newrunstate = gs.mapgen_next_state.unwrap();
+                }
+            }
+        }
+        RunState::Screenshot => {
+            ctx.screenshot("screenshots/screenshot.png");
+            newrunstate = RunState::AwaitingInput;
         }
     }
 
