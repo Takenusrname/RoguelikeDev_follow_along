@@ -1,6 +1,6 @@
 use super::{
-    MAPHEIGHT, MAPWIDTH, Map, RunState, SHOW_MAPGEN_VISUALIZER, State, components::*, draw_map,
-    gui, player_input, saveload_system,
+    Map, RunState, SHOW_MAPGEN_VISUALIZER, State, camera::render_debug_map, components::*, gui,
+    player_input, saveload_system,
 };
 use bracket_lib::terminal::BTerm;
 use specs::prelude::*;
@@ -179,11 +179,11 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
 
         RunState::MagicMapReveal { row } => {
             let mut map = gs.ecs.fetch_mut::<Map>();
-            for x in 0..MAPWIDTH {
+            for x in 0..map.width {
                 let idx = map.xy_idx(x as i32, row);
                 map.revealed_tiles[idx] = true;
             }
-            if row as usize == MAPHEIGHT - 1 {
+            if row == map.height - 1 {
                 newrunstate = RunState::MonsterTurn;
             } else {
                 newrunstate = RunState::MagicMapReveal { row: row + 1 }
@@ -194,7 +194,7 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
                 newrunstate = gs.mapgen_next_state.unwrap();
             }
             ctx.cls();
-            draw_map(&gs.mapgen_history[gs.mapgen_index], ctx);
+            render_debug_map(&gs.mapgen_history[gs.mapgen_index], ctx);
 
             gs.mapgen_timer += ctx.frame_time_ms;
             if gs.mapgen_timer > 300.0 {

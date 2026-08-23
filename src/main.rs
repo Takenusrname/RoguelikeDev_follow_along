@@ -8,6 +8,7 @@ use specs::{prelude::*, saveload::SimpleMarkerAllocator};
 
 mod colors;
 pub use colors::*;
+pub mod camera;
 mod components;
 pub use components::*;
 mod damage_system;
@@ -225,7 +226,7 @@ impl State {
 
         let mut rng = self.ecs.write_resource::<RandomNumberGenerator>();
         
-        let mut builder = map_builders::random_builder(new_depth, &mut rng);
+        let mut builder = map_builders::random_builder(new_depth, &mut rng, 80, 50);
         builder.build_map(&mut rng);
         
         std::mem::drop(rng);
@@ -296,7 +297,7 @@ fn main() -> BError {
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
-    gs.ecs.insert(Map::new(1));
+    gs.ecs.insert(Map::new(1, 64, 64));
     gs.ecs.insert(Point::new(0, 0));
     gs.ecs.insert(RandomNumberGenerator::new());
 
