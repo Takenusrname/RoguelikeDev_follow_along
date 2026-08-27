@@ -9,9 +9,6 @@ savegame.json
 *.pyc
 __pycache__/
 bin/
-venv/
 lib/
 lib64/
 include/
-pyvenv.cfg
-2026/python/lib64

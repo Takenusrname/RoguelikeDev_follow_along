@@ -1,0 +1,16 @@
+{
+    "GameSettings":{
+        "screen_width": 80,
+        "screen_height": 60,
+        "font_file": "data/cp437_12x12_mod.png",
+        "row_col": 16
+    },
+    "MapSettings":{
+        "map_width": 80,
+        "map_height": 55,
+        "room_max_size": 10,
+        "room_min_size": 6,
+        "max_rooms": 30,
+        "max_monsters_per_room": 2
+    }
+}
