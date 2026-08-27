@@ -1,8 +1,8 @@
-use super::{MetaMapBuilder, BuilderMap};
+use super::{BuilderMap, MetaMapBuilder};
 use crate::TileType;
-use bracket_lib::{random::RandomNumberGenerator, pathfinding::DijkstraMap};
+use bracket_lib::{pathfinding::DijkstraMap, random::RandomNumberGenerator};
 
-pub struct DistantExit{}
+pub struct DistantExit {}
 
 impl MetaMapBuilder for DistantExit {
     fn build_map(&mut self, rng: &mut RandomNumberGenerator, build_data: &mut BuilderMap) {
@@ -13,7 +13,7 @@ impl MetaMapBuilder for DistantExit {
 impl DistantExit {
     #[allow(dead_code)]
     pub fn new() -> Box<DistantExit> {
-        Box::new(DistantExit {  })
+        Box::new(DistantExit {})
     }
 
     fn build(&mut self, _rng: &mut RandomNumberGenerator, build_data: &mut BuilderMap) {
@@ -23,14 +23,20 @@ impl DistantExit {
         build_data.map.populate_blocked();
 
         let map_starts: Vec<usize> = vec![start_idx];
-        let dm = DijkstraMap::new(build_data.map.width as usize, build_data.map.height as usize, &map_starts, &build_data.map, 1000.0);
+        let dm = DijkstraMap::new(
+            build_data.map.width as usize,
+            build_data.map.height as usize,
+            &map_starts,
+            &build_data.map,
+            1000.0,
+        );
 
         let mut exit_tile = (0, 0.0f32);
 
         for (i, tile) in build_data.map.tiles.iter_mut().enumerate() {
             if *tile == TileType::DownStairs {
                 *tile = TileType::Floor;
-            } 
+            }
             if *tile == TileType::Floor {
                 let distance_to_start = dm.map[i];
                 if distance_to_start != f32::MAX {

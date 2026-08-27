@@ -2,7 +2,7 @@ use super::{
     Map, RunState, SHOW_MAPGEN_VISUALIZER, State, camera::render_debug_map, components::*, gui,
     player_input, saveload_system,
 };
-use bracket_lib::terminal::BTerm;
+use bracket_lib::{pathfinding::DijkstraMap, terminal::BTerm};
 use specs::prelude::*;
 
 pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
@@ -179,6 +179,7 @@ pub fn current_state(gs: &mut State, ctx: &mut BTerm, rs: RunState) {
 
         RunState::MagicMapReveal { row } => {
             let mut map = gs.ecs.fetch_mut::<Map>();
+            
             for x in 0..map.width {
                 let idx = map.xy_idx(x as i32, row);
                 map.revealed_tiles[idx] = true;

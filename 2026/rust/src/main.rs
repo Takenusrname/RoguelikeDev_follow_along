@@ -226,7 +226,7 @@ impl State {
 
         let mut rng = self.ecs.write_resource::<RandomNumberGenerator>();
         
-        let mut builder = map_builders::random_builder(new_depth, &mut rng, 80, 50);
+        let mut builder = map_builders::random_builder(new_depth, &mut rng, 79, 49);
         builder.build_map(&mut rng);
         
         std::mem::drop(rng);
@@ -264,14 +264,14 @@ impl State {
 
 embedded_resource!(FONT_S, "../resources/cp437_8x8_mod.png");
 embedded_resource!(FONT_M, "../resources/cp437_12x12_mod.png");
-embedded_resource!(FONT_L, "../resources/cp437_16x16_mod.png");
+embedded_resource!(FONT_L, "../resources/cp437_16x16_mod2.png");
 
 fn main() -> BError {
     use bracket_lib::terminal::BTermBuilder;
 
     link_resource!(FONT_S, "resources/cp437_8x8_mod.png");
     link_resource!(FONT_M, "resources/cp437_12x12_mod.png");
-    link_resource!(FONT_L, "resources/cp437_16x16_mod.png");
+    link_resource!(FONT_L, "resources/cp437_16x16_mod2.png");
 
     let mut ctx = BTermBuilder::simple(80, 50)
         .unwrap()
